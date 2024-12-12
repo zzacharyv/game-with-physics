@@ -1,0 +1,5 @@
+1: all cells are the same color
+if(grid.getCell(1,4)->equals(grid.getCell(2,4)) && grid.getCell(2,4)->equals(grid.getCell(3,4)) && grid.getCell(1,4)->equals(grid.getCell(3,4))) {
+
+2: all cells equal a certain color
+			
