@@ -1,7 +1,7 @@
 #include <SDL2/SDL.h>
 #include <array>
 #include <iostream>
-#include "grid.cpp"
+#include "world.cpp"
 #include "colors/spectral.cpp"
 #include "colors/color_conversion.cpp"
 using namespace std;
@@ -10,6 +10,10 @@ using namespace std;
 const int IDLE_ANIMATION_FRAMES = 4;
 SDL_Rect idlePlayerSpriteClips[IDLE_ANIMATION_FRAMES];
 LTexture idlePlayerSpriteSheetTexture;
+
+// SDL_Rect ground_collision_sprite_clips[4];
+// LTexture ground_collision_sprite_sheet;
+
 
 // LTexture cellTexture;
 
@@ -63,8 +67,8 @@ public:
     // int getColorB();
     Player(int posx, int posy);
     Player();
-    void update(array<array<Cell, 5>, 5> level, Grid *grid);
-    void physics_update();
+    // void update(array<array<Cell, 5>, 5> level, Grid *grid);
+    void physics_update(SDL_Renderer *, int, World);
     void updateVelocityX(double delta);
     void setWalkingLeft(bool isWalkingLeft);
     void setWalkingRight(bool isWalkingRight);
@@ -76,6 +80,9 @@ public:
     void renderPlayer(SDL_Renderer *gRenderer, int frame, int meatDimensions[2], int SCREEN_WIDTH, int SCREEN_HEIGHT);
     void physics_renderPlayer(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT);
     bool loadMedia(SDL_Renderer *gRenderer);
+
+    bool detect_ground_collision();
+    void render_ground_collision(SDL_Renderer *, int);
 };
 
 int Player::getPosx()
@@ -145,7 +152,7 @@ Player::Player()
     posy = 0;
     physics_posx = 0;
     physics_posy = 0;
-    x_velocity = 0.1;
+    x_velocity = 0.0;
     y_velocity = 0.0;
     walkingLeft = false;
     walkingRight = false;
@@ -235,70 +242,70 @@ void Player::renderPlayer(SDL_Renderer *gRenderer, int frame, int meatDimensions
     //     cellTexture.render(0, 0, renderQuad, gRenderer, currentClip);
 }
 
-void Player::update(array<array<Cell, 5>, 5> level, Grid *grid)
-{
-    // check if there is a filled block beneath the player
-    if (level[this->getPosy() + 1][this->getPosx()].getType() == false)
-    {
-        this->setPosy(this->getPosy() + 1);
-    }
-    int cellBelowType = (*grid).getCell(this->getPosx(), this->getPosy() + 1)->getType();
-    if (cellBelowType < 0)
-    {
-        this->setColorFresh(false);
-        if (cellBelowType == -2)
-        {
-            cout << "end block" << endl;
-        }
-        else
-        {
-        }
-    }
-    if (this->isColorFresh() == true)
-    {
+// void Player::update(array<array<Cell, 5>, 5> level, Grid *grid)
+// {
+//     // check if there is a filled block beneath the player
+//     if (level[this->getPosy() + 1][this->getPosx()].getType() == false)
+//     {
+//         this->setPosy(this->getPosy() + 1);
+//     }
+//     int cellBelowType = (*grid).getCell(this->getPosx(), this->getPosy() + 1)->getType();
+//     if (cellBelowType < 0)
+//     {
+//         this->setColorFresh(false);
+//         if (cellBelowType == -2)
+//         {
+//             cout << "end block" << endl;
+//         }
+//         else
+//         {
+//         }
+//     }
+//     if (this->isColorFresh() == true)
+//     {
         
-        Cell *cell = (*grid).getCell(this->getPosx(), this->getPosy() + 1);
+//         Cell *cell = (*grid).getCell(this->getPosx(), this->getPosy() + 1);
 
-        unsigned char cellr = (*cell).getR();
-        unsigned char cellg = (*cell).getG();
-        unsigned char cellb = (*cell).getB();
+//         unsigned char cellr = (*cell).getR();
+//         unsigned char cellg = (*cell).getG();
+//         unsigned char cellb = (*cell).getB();
 
-        unsigned char playerr = color[0];
-        unsigned char playerg = color[1];
-        unsigned char playerb = color[2];
+//         unsigned char playerr = color[0];
+//         unsigned char playerg = color[1];
+//         unsigned char playerb = color[2];
 
-        // If cell is white, treat it like transparent
-        if (playerr == 255 && playerg == 255 && playerb == 255)
-        {
-            color[0] = cellr;
-            color[1] = cellg;
-            color[2] = cellb;
-        }
-        // Else mix the colors of the cell and player
-        else
-        {
-            array<int, 3> mix = spectral_mix({cellr, cellg, cellb}, {playerr, playerg, playerb}, 0.5);
-            HSL hsl = rgb2hsl(static_cast<float>(mix[0]),static_cast<float>(mix[1]),static_cast<float>(mix[2]));
-            // if (hsl.s < 0.5) {
-            //     hsl.s = 0.5;
-            // }
-            RGB rgb = hsl2rgb(hsl.h, hsl.s, hsl.l);
-            (*cell).setColor(rgb.r, rgb.g, rgb.b);
+//         // If cell is white, treat it like transparent
+//         if (playerr == 255 && playerg == 255 && playerb == 255)
+//         {
+//             color[0] = cellr;
+//             color[1] = cellg;
+//             color[2] = cellb;
+//         }
+//         // Else mix the colors of the cell and player
+//         else
+//         {
+//             array<int, 3> mix = spectral_mix({cellr, cellg, cellb}, {playerr, playerg, playerb}, 0.5);
+//             HSL hsl = rgb2hsl(static_cast<float>(mix[0]),static_cast<float>(mix[1]),static_cast<float>(mix[2]));
+//             // if (hsl.s < 0.5) {
+//             //     hsl.s = 0.5;
+//             // }
+//             RGB rgb = hsl2rgb(hsl.h, hsl.s, hsl.l);
+//             (*cell).setColor(rgb.r, rgb.g, rgb.b);
 
-            mix = spectral_mix({cellr, cellg, cellb}, {playerr, playerg, playerb}, 0.25);
-            hsl = rgb2hsl(static_cast<float>(mix[0]),static_cast<float>(mix[1]),static_cast<float>(mix[2]));
-            // if (hsl.s < 0.5) {
-            //     hsl.s = 0.5;
-            // }
-            rgb = hsl2rgb(hsl.h, hsl.s, hsl.l);
-            color[0] = rgb.r;
-            color[1] = rgb.g;
-            color[2] = rgb.b;
-        }
+//             mix = spectral_mix({cellr, cellg, cellb}, {playerr, playerg, playerb}, 0.25);
+//             hsl = rgb2hsl(static_cast<float>(mix[0]),static_cast<float>(mix[1]),static_cast<float>(mix[2]));
+//             // if (hsl.s < 0.5) {
+//             //     hsl.s = 0.5;
+//             // }
+//             rgb = hsl2rgb(hsl.h, hsl.s, hsl.l);
+//             color[0] = rgb.r;
+//             color[1] = rgb.g;
+//             color[2] = rgb.b;
+//         }
 
-        this->setColorFresh(false);
-    }
-}
+//         this->setColorFresh(false);
+//     }
+// }
 
 bool Player::loadMedia(SDL_Renderer *gRenderer)
 {
@@ -306,130 +313,36 @@ bool Player::loadMedia(SDL_Renderer *gRenderer)
     bool success = true;
 
     // Load sprite sheet textures
-    // Idle
-    if (!idlePlayerSpriteSheetTexture.loadFromFile("media/Untitled.png", gRenderer))
+    // Ground Collision
+    if (!ground_collision_sprite_sheet.loadFromFile("media/ground collision/ground_collision_v1.png", gRenderer))
     {
         printf("Failed to load idle animation texture!\n");
         success = false;
     }
     else
     {
-        // Set sprite clips
-        idlePlayerSpriteClips[0].x = 0;
-        idlePlayerSpriteClips[0].y = 0;
-        idlePlayerSpriteClips[0].w = 64;
-        idlePlayerSpriteClips[0].h = 64;
-
-        idlePlayerSpriteClips[1].x = 64;
-        idlePlayerSpriteClips[1].y = 0;
-        idlePlayerSpriteClips[1].w = 64;
-        idlePlayerSpriteClips[1].h = 64;
-
-        idlePlayerSpriteClips[2].x = 128;
-        idlePlayerSpriteClips[2].y = 0;
-        idlePlayerSpriteClips[2].w = 64;
-        idlePlayerSpriteClips[2].h = 64;
-
-        idlePlayerSpriteClips[3].x = 192;
-        idlePlayerSpriteClips[3].y = 0;
-        idlePlayerSpriteClips[3].w = 64;
-        idlePlayerSpriteClips[3].h = 64;
+        for(int i=0; i<4; ++i) {
+            ground_collision_sprite_clips[i].x = i*40;
+            ground_collision_sprite_clips[i].y = 0;
+            ground_collision_sprite_clips[i].w = 40;
+            ground_collision_sprite_clips[i].h = 40;
+        }
+    
     }
 
-    if (!pooPlayerSpriteSheetTexture.loadFromFile("media/player_idle.png", gRenderer))
-    {
-        printf("Failed to load idle animation texture!\n");
-        success = false;
-    }
-    else
-    {
-        for (int i = 0; i < POO_ANIMATION_FRAMES; ++i)
-        {
-            pooPlayerSpriteClips[i].x = i * 256;
-            pooPlayerSpriteClips[i].y = 0;
-            pooPlayerSpriteClips[i].w = 256;
-            pooPlayerSpriteClips[i].h = 256;
-        }
-    }
-    // Walking Right
-    if (!walkingRightPlayerSpriteSheetTexture.loadFromFile("media/walking_player.png", gRenderer))
-    {
-        printf("Failed to load walking animation texture!\n");
-        success = false;
-    }
-    else
-    {
-        for (int i = 0; i < WALKING_ANIMATION_FRAMES; ++i)
-        {
-            walkingRightPlayerSpriteClips[i].x = i * 512;
-            walkingRightPlayerSpriteClips[i].y = 0;
-            walkingRightPlayerSpriteClips[i].w = 512;
-            walkingRightPlayerSpriteClips[i].h = 256;
-        }
-    }
-    // Walking Left
-    if (!walkingLeftPlayerSpriteSheetTexture.loadFromFile("media/walking_player.png", gRenderer))
-    {
-        printf("Failed to load walking animation texture!\n");
-        success = false;
-    }
-    else
-    {
-        for (int i = 0; i < WALKING_ANIMATION_FRAMES; ++i)
-        {
-            walkingLeftPlayerSpriteClips[i].x = walkingRightPlayerSpriteClips[WALKING_ANIMATION_FRAMES - 1 - i].x;
-            walkingLeftPlayerSpriteClips[i].y = walkingRightPlayerSpriteClips[WALKING_ANIMATION_FRAMES - 1 - i].y;
-            walkingLeftPlayerSpriteClips[i].w = walkingRightPlayerSpriteClips[WALKING_ANIMATION_FRAMES - 1 - i].w;
-            walkingLeftPlayerSpriteClips[i].h = walkingRightPlayerSpriteClips[WALKING_ANIMATION_FRAMES - 1 - i].h;
-        }
-    }
-    // High jumping right
-    if (!highJumpRightPlayerSpriteSheetTexture.loadFromFile("media/jumping_player_1.png", gRenderer))
-    {
-        printf("Failed to load high-jumping animation texture!\n");
-        success = false;
-    }
-    else
-    {
-        for (int i = 0; i < HIGH_JUMPING_ANIMATION_FRAMES; ++i)
-        {
-            highJumpRightPlayerSpriteClips[i].x = 768 * i;
-            highJumpRightPlayerSpriteClips[i].y = 0;
-            highJumpRightPlayerSpriteClips[i].w = 768;
-            highJumpRightPlayerSpriteClips[i].h = 512;
-        }
-    }
-     // High jumping left
-    if (!highJumpLeftPlayerSpriteSheetTexture.loadFromFile("media/jumping_player_2.png", gRenderer))
-    {
-        printf("Failed to load high-jumping animation texture!\n");
-        success = false;
-    }
-    else
-    {
-        for (int i = 0; i < HIGH_JUMPING_ANIMATION_FRAMES; ++i)
-        {
-            highJumpLeftPlayerSpriteClips[HIGH_JUMPING_ANIMATION_FRAMES-1-i].x = 768 * i;
-            highJumpLeftPlayerSpriteClips[HIGH_JUMPING_ANIMATION_FRAMES-1-i].y = 0;
-            highJumpLeftPlayerSpriteClips[HIGH_JUMPING_ANIMATION_FRAMES-1-i].w = 768;
-            highJumpLeftPlayerSpriteClips[HIGH_JUMPING_ANIMATION_FRAMES-1-i].h = 512;
-        }
-    }
-
-    // if (!cellTexture.loadFromFile("media/cell.png", gRenderer))
-    // {
-    //     printf("Failed to load cell texture!\n");
-    //     success = false;
-    // }
     return success;
 }
 
-void Player::physics_update() {
+void Player::physics_update(SDL_Renderer * gRenderer, int frame, World world) {
     this->physics_posx = physics_posx + x_velocity;
     this->posx = static_cast<int>(physics_posx);
 
     this->physics_posy = physics_posy + y_velocity + gravity;
     this->posy = static_cast<int>(physics_posy);
+    if (this->detect_ground_collision()) {
+        world.render_ground_collision(gRenderer, frame, getPosx(),getPosy());
+    }
+    
 
 }
 
@@ -449,14 +362,24 @@ void Player::physics_renderPlayer(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int
 }
 
 void Player::updateVelocityX(double delta) {
-    double cap = 0.5;
+    double cap = 3.0;
     this->x_velocity += delta;
-    if (abs(this->x_velocity) > 0.5) {
+    if (abs(this->x_velocity) > cap) {
         if( this->x_velocity > 0) {
-            this->x_velocity = 0.5;
+            this->x_velocity = cap;
         } else {
-            this->x_velocity = -0.5;
+            this->x_velocity = -1.0 * cap;
         }
     }
 
 }
+
+bool Player::detect_ground_collision() {
+    if(this->posy+40 >= 288) {
+        this->posy = 248;
+        this->physics_posy = 248;
+        return true;
+    }
+    return false;
+}
+

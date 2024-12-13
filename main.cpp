@@ -146,7 +146,7 @@ int main(int argc, char *args[])
 	{
 		// Grid
 		int level = 2;
-		Grid grid = Grid(level, SCREEN_WIDTH, SCREEN_HEIGHT);
+		World world = World();
 
 		// Player
 		Player player = Player();
@@ -159,7 +159,7 @@ int main(int argc, char *args[])
 		float windowX, windowY;
 
 		// Load media
-		if (!(player.loadMedia(gRenderer) && Cell::loadMedia(gRenderer) && grid.loadMedia(gRenderer)))
+		if (!(player.loadMedia(gRenderer) && Cell::loadMedia(gRenderer) && world.loadMedia(gRenderer)))
 		{
 			printf("Failed to load media!\n");
 		}
@@ -211,13 +211,19 @@ int main(int argc, char *args[])
 						{
 							// can accelerate out of control
 							// player.x_velocity += 0.5;
-							player.x_velocity += 0.2;
+							if( player.x_velocity == 0.0) {
+								player.x_velocity = 1;
+							}
+							player.updateVelocityX(0.4);
 						}
 						if (e.key.keysym.sym == SDLK_LEFT)
 						{
 							// can accelerate out of control
 							// player.x_velocity += -0.5;
-							player.x_velocity += -0.2;
+							if( player.x_velocity == 0.0) {
+								player.x_velocity = -1;
+							}
+							player.updateVelocityX(-0.4);
 						}
 						if (e.key.keysym.sym == SDLK_UP)
 						{
@@ -265,110 +271,6 @@ int main(int argc, char *args[])
 					}
 					SDL_GetMouseState(&xMouse, &yMouse);
 					// jump right
-					if (grid.buttons[2].inBounds(xMouse, yMouse))
-					{
-						// grid.buttons[2].setColor(255,0,0);
-						if (e.type == SDL_MOUSEBUTTONUP)
-						{
-
-							if (player.getPosx() < 3 && player.isHighJumpingLeft() == false && player.isWalkingRight() == false && player.isWalkingLeft() == false && player.isHighJumpingRight() == false)
-							{
-								grid.buttons[2].setColor(0, 255, 255);
-								frame = 0;
-								jumpingframe = 0;
-								player.setHighJumpingRight(true);
-								player.setPosx(2 + player.getPosx());
-							}
-						}
-					}
-					if (grid.buttons[0].inBounds(xMouse, yMouse))
-					{
-						// grid.buttons[0].color[0] = 0;
-						// grid.buttons[0].color[1] = 0;
-						// grid.buttons[0].color[2] = 0;
-						if (e.type == SDL_MOUSEBUTTONUP)
-						{
-
-							if (player.getPosx() > 0 && player.isHighJumpingLeft() == false && player.isWalkingRight() == false && player.isWalkingLeft() == false && player.isHighJumpingRight() == false)
-							{
-								// grid.buttons[0].color[0] = 255;
-								// grid.buttons[0].color[1] = 0;
-								// grid.buttons[0].color[2] = 0;
-								frame = 0;
-								jumpingframe = 0;
-								player.setWalkingLeft(true);
-								player.setPosx(-1 + player.getPosx());
-							}
-						}
-					}
-					if (grid.buttons[3].inBounds(xMouse, yMouse))
-					{
-						// grid.buttons[3].color[0] = 0;
-						// grid.buttons[3].color[1] = 0;
-						// grid.buttons[3].color[2] = 0;
-						if (e.type == SDL_MOUSEBUTTONUP)
-						{
-
-							if (player.getPosx() < 4 && player.isHighJumpingLeft() == false && player.isWalkingRight() == false && player.isWalkingLeft() == false && player.isHighJumpingRight() == false)
-							{
-								// grid.buttons[3].color[0] = 255;
-								// grid.buttons[3].color[1] = 0;
-								// grid.buttons[3].color[2] = 0;
-								frame = 0;
-								jumpingframe = 0;
-								player.setWalkingRight(true);
-								player.setPosx(1 + player.getPosx());
-							}
-						}
-					}
-					if (grid.buttons[1].inBounds(xMouse, yMouse))
-					{
-						// grid.buttons[1].color[0] = 0;
-						// grid.buttons[1].color[1] = 0;
-						// grid.buttons[1].color[2] = 0;
-						if (e.type == SDL_MOUSEBUTTONUP)
-						{
-
-							if (player.getPosx() > 1 && player.isHighJumpingLeft() == false && player.isWalkingRight() == false && player.isWalkingLeft() == false && player.isHighJumpingRight() == false)
-							{
-								// grid.buttons[1].color[0] = 255;
-								// grid.buttons[1].color[1] = 0;
-								// grid.buttons[1].color[2] = 0;
-								frame = 0;
-								jumpingframe = 0;
-								player.setHighJumpingLeft(true);
-								player.setPosx(-2 + player.getPosx());
-							}
-						}
-					}
-					// reset button
-					if (grid.buttons[4].inBounds(xMouse, yMouse))
-					{
-						// grid.buttons[4].color[0] = 0;
-						// grid.buttons[4].color[1] = 0;
-						// grid.buttons[4].color[2] = 0;
-						if (e.type == SDL_MOUSEBUTTONUP)
-						{
-
-							if (true)
-							{
-								cout << "reset" << endl;
-
-								grid = Grid(level, SCREEN_WIDTH, SCREEN_HEIGHT);
-								player = Player(0, 3);
-								// grid.buttons[4].color[0] = 255;
-								// grid.buttons[4].color[1] = 0;
-								// grid.buttons[4].color[2] = 0;
-								frame = 0;
-								jumpingframe = 0;
-							}
-						}
-					}
-				}
-
-				if (grid.getCell(1, 4)->equals(grid.getCell(2, 4)) && grid.getCell(2, 4)->equals(grid.getCell(3, 4)) && grid.getCell(1, 4)->equals(grid.getCell(3, 4)))
-				{
-					cout << "game won" << endl;
 				}
 
 				// Calculate and correct fps
@@ -378,9 +280,16 @@ int main(int argc, char *args[])
 					avgFPS = 0;
 				}
 
+				// Clear screen
+				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+				SDL_RenderClear(gRenderer);
+
+				// Render the world
+				world.render(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+
 				// // Update the player
 				// player.update(grid.getLevel(), &grid);
-				player.physics_update();
+				player.physics_update(gRenderer, frame, world);
 
 				// Set text to be rendered
 				timeText.str("");
@@ -392,17 +301,10 @@ int main(int argc, char *args[])
 				// 	printf("Unable to render FPS texture!\n");
 				// }
 
-				// Clear screen
-				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-				SDL_RenderClear(gRenderer);
+				
 
-				// Render the grid
-				grid.renderGrid(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
-
+				
 				// Render the player
-				int meatDimensions[2] = {0, 0};
-				grid.getMeatDimensions(meatDimensions);
-				// player.renderPlayer(gRenderer, jumpingframe, meatDimensions, SCREEN_WIDTH, SCREEN_HEIGHT);
 				player.physics_renderPlayer(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 				// Update screen
