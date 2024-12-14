@@ -135,6 +135,7 @@ void reset()
 {
 }
 
+
 int main(int argc, char *args[])
 {
 	// Start up SDL and create window
@@ -289,7 +290,7 @@ int main(int argc, char *args[])
 
 				// // Update the player
 				// player.update(grid.getLevel(), &grid);
-				player.physics_update(gRenderer, frame, world);
+				player.physics_update(gRenderer, frame, &world);
 
 				// Set text to be rendered
 				timeText.str("");

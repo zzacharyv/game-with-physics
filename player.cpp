@@ -68,7 +68,7 @@ public:
     Player(int posx, int posy);
     Player();
     // void update(array<array<Cell, 5>, 5> level, Grid *grid);
-    void physics_update(SDL_Renderer *, int, World);
+    void physics_update(SDL_Renderer *, int, World *);
     void updateVelocityX(double delta);
     void setWalkingLeft(bool isWalkingLeft);
     void setWalkingRight(bool isWalkingRight);
@@ -333,14 +333,14 @@ bool Player::loadMedia(SDL_Renderer *gRenderer)
     return success;
 }
 
-void Player::physics_update(SDL_Renderer * gRenderer, int frame, World world) {
+void Player::physics_update(SDL_Renderer * gRenderer, int frame, World * world) {
     this->physics_posx = physics_posx + x_velocity;
     this->posx = static_cast<int>(physics_posx);
 
     this->physics_posy = physics_posy + y_velocity + gravity;
     this->posy = static_cast<int>(physics_posy);
     if (this->detect_ground_collision()) {
-        world.render_ground_collision(gRenderer, frame, getPosx(),getPosy());
+        (*world).render_ground_collision(gRenderer, frame, getPosx(),getPosy());
     }
     
 
