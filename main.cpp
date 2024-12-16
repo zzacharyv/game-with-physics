@@ -248,6 +248,15 @@ int main(int argc, char *args[])
 						} else {
 							player.y_velocity == 0.0;
 						}
+						if (e.key.keysym.sym == SDLK_DOWN)
+						{
+							// can accelerate out of control
+							// player.x_velocity += -0.5;
+							if( player.y_velocity == 0.0) {
+								player.y_velocity = 1;
+							}
+							player.y_velocity += 0.4;
+						}
 					}
 					if (e.type == SDL_KEYUP)
 					{
@@ -269,6 +278,12 @@ int main(int argc, char *args[])
 							jumped_frame = 0;
 							
 						}
+						if (e.key.keysym.sym == SDLK_DOWN)
+						{
+							player.y_velocity = 0.0;
+							jumped_frame = 0;
+							
+						}
 					}
 					SDL_GetMouseState(&xMouse, &yMouse);
 					// jump right
@@ -281,6 +296,10 @@ int main(int argc, char *args[])
 					avgFPS = 0;
 				}
 
+				SDL_Rect poo = {0,0,SCREEN_WIDTH-20,SCREEN_HEIGHT-20};
+				// SDL_RenderSetViewport(gRenderer,&poo);
+				
+
 				// Clear screen
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(gRenderer);
@@ -289,22 +308,8 @@ int main(int argc, char *args[])
 				world.render(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 				// // Update the player
-				// player.update(grid.getLevel(), &grid);
-				player.physics_update(gRenderer, frame, &world);
+				player.physics_update(gRenderer, frame, &world, SCREEN_HEIGHT, SCREEN_WIDTH);
 
-				// Set text to be rendered
-				timeText.str("");
-				timeText << "Average Frames Per Second (With Cap) " << avgFPS;
-
-				// Render text
-				// if (!gFPSTextTexture.loadFromRenderedText(timeText.str().c_str(), textColor, gRenderer, gFont))
-				// {
-				// 	printf("Unable to render FPS texture!\n");
-				// }
-
-				
-
-				
 				// Render the player
 				player.physics_renderPlayer(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -314,38 +319,11 @@ int main(int argc, char *args[])
 
 				// Go to next frame
 				++frame;
-				++jumpingframe;
-				++jumped_frame;
 
 				// Cycle Animation
-				if (jumpingframe / 4 >= HIGH_JUMPING_ANIMATION_FRAMES)
-				{
-					jumpingframe = 0;
-					if (player.isHighJumpingRight() == true)
-					{
-						player.setHighJumpingRight(false);
-						player.setColorFresh(true);
-					}
-					if (player.isHighJumpingLeft() == true)
-					{
-						player.setHighJumpingLeft(false);
-						player.setColorFresh(true);
-					}
-				}
 				if (frame / 4 >= IDLE_ANIMATION_FRAMES)
 				{
 					frame = 0;
-					if (player.isWalkingRight() == true)
-					{
-						player.setWalkingRight(false);
-
-						player.setColorFresh(true);
-					}
-					if (player.isWalkingLeft() == true)
-					{
-						player.setWalkingLeft(false);
-						player.setColorFresh(true);
-					}
 				}
 
 				// If frame finished early
@@ -364,27 +342,3 @@ int main(int argc, char *args[])
 
 	return 0;
 }
-
-// void keyDown() {
-// 	if (e.key.keysym.sym == SDLK_RIGHT && player.getPosx() < 4 && player.isWalkingRight() == false && player.isWalkingLeft() == false && player.isHighJumpingRight() == false)
-// 						{
-// 							frame = 0;
-// 							jumpingframe = 0;
-// 							player.setWalkingRight(true);
-// 							player.setPosx(1 + player.getPosx());
-// 						}
-// 						else if (e.key.keysym.sym == SDLK_LEFT && player.getPosx() > 0 && player.isWalkingRight() == false && player.isWalkingLeft() == false && player.isHighJumpingRight() == false)
-// 						{
-// 							frame = 0;
-// 							jumpingframe = 0;
-// 							player.setWalkingLeft(true);
-// 							player.setPosx(-1 + player.getPosx());
-// 						}
-// 						else if (e.key.keysym.sym == SDLK_UP && player.getPosx() < 3 && player.isWalkingRight() == false && player.isWalkingLeft() == false && player.isHighJumpingRight() == false)
-// 						{
-// 							frame = 0;
-// 							jumpingframe = 0;
-// 							player.setHighJumpingRight(true);
-// 							player.setPosx(2 + player.getPosx());
-// 						}
-// }

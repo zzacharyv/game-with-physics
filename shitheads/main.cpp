@@ -115,6 +115,8 @@ int main(int argc, char *args[])
     } else {
         cout << "poop" << endl;
     }
+    library.getBooks()->erase(result);
+
     //   [f](const int* p) { return *p == *f; });
     // it = find (library.getBooks()->begin(), library.getBooks()->end(), 2);
     // if (it != library.getBooks()->end())

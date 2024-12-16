@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <array>
 #include <iostream>
+#include <stdexcept>
 #include "world.cpp"
 #include "colors/spectral.cpp"
 #include "colors/color_conversion.cpp"
@@ -13,7 +14,6 @@ LTexture idlePlayerSpriteSheetTexture;
 
 // SDL_Rect ground_collision_sprite_clips[4];
 // LTexture ground_collision_sprite_sheet;
-
 
 // LTexture cellTexture;
 
@@ -68,7 +68,7 @@ public:
     Player(int posx, int posy);
     Player();
     // void update(array<array<Cell, 5>, 5> level, Grid *grid);
-    void physics_update(SDL_Renderer *, int, World *);
+    void physics_update(SDL_Renderer *, int, World *, int, int);
     void updateVelocityX(double delta);
     void setWalkingLeft(bool isWalkingLeft);
     void setWalkingRight(bool isWalkingRight);
@@ -81,7 +81,7 @@ public:
     void physics_renderPlayer(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT);
     bool loadMedia(SDL_Renderer *gRenderer);
 
-    bool detect_ground_collision();
+    bool detect_ground_collision(int, int);
     void render_ground_collision(SDL_Renderer *, int);
 };
 
@@ -105,7 +105,8 @@ bool Player::isHighJumpingRight()
 {
     return highJumpingRight;
 }
-bool Player::isHighJumpingLeft() {
+bool Player::isHighJumpingLeft()
+{
     return highJumpingLeft;
 }
 bool Player::isColorFresh()
@@ -132,7 +133,8 @@ void Player::setHighJumpingRight(bool isHighJumpingRight)
 {
     this->highJumpingRight = isHighJumpingRight;
 }
-void Player::setHighJumpingLeft(bool isHighJumpingLeft) {
+void Player::setHighJumpingLeft(bool isHighJumpingLeft)
+{
     this->highJumpingLeft = isHighJumpingLeft;
 }
 void Player::setColorFresh(bool isColorFresh)
@@ -223,7 +225,8 @@ void Player::renderPlayer(SDL_Renderer *gRenderer, int frame, int meatDimensions
         highJumpRightPlayerSpriteSheetTexture.setColor(color[0], color[1], color[2]);
         highJumpRightPlayerSpriteSheetTexture.render(0, 0, renderQuad, gRenderer, currentClip);
     }
-    else if (this->isHighJumpingLeft() == true) {
+    else if (this->isHighJumpingLeft() == true)
+    {
         SDL_Rect *currentClip = &highJumpLeftPlayerSpriteClips[frame / 4];
         SDL_Rect renderQuad = {width_unit * getPosx(), height_unit * (getPosy() - 1), width_unit * 3, height_unit * 2};
         highJumpLeftPlayerSpriteSheetTexture.setColor(color[0], color[1], color[2]);
@@ -242,71 +245,6 @@ void Player::renderPlayer(SDL_Renderer *gRenderer, int frame, int meatDimensions
     //     cellTexture.render(0, 0, renderQuad, gRenderer, currentClip);
 }
 
-// void Player::update(array<array<Cell, 5>, 5> level, Grid *grid)
-// {
-//     // check if there is a filled block beneath the player
-//     if (level[this->getPosy() + 1][this->getPosx()].getType() == false)
-//     {
-//         this->setPosy(this->getPosy() + 1);
-//     }
-//     int cellBelowType = (*grid).getCell(this->getPosx(), this->getPosy() + 1)->getType();
-//     if (cellBelowType < 0)
-//     {
-//         this->setColorFresh(false);
-//         if (cellBelowType == -2)
-//         {
-//             cout << "end block" << endl;
-//         }
-//         else
-//         {
-//         }
-//     }
-//     if (this->isColorFresh() == true)
-//     {
-        
-//         Cell *cell = (*grid).getCell(this->getPosx(), this->getPosy() + 1);
-
-//         unsigned char cellr = (*cell).getR();
-//         unsigned char cellg = (*cell).getG();
-//         unsigned char cellb = (*cell).getB();
-
-//         unsigned char playerr = color[0];
-//         unsigned char playerg = color[1];
-//         unsigned char playerb = color[2];
-
-//         // If cell is white, treat it like transparent
-//         if (playerr == 255 && playerg == 255 && playerb == 255)
-//         {
-//             color[0] = cellr;
-//             color[1] = cellg;
-//             color[2] = cellb;
-//         }
-//         // Else mix the colors of the cell and player
-//         else
-//         {
-//             array<int, 3> mix = spectral_mix({cellr, cellg, cellb}, {playerr, playerg, playerb}, 0.5);
-//             HSL hsl = rgb2hsl(static_cast<float>(mix[0]),static_cast<float>(mix[1]),static_cast<float>(mix[2]));
-//             // if (hsl.s < 0.5) {
-//             //     hsl.s = 0.5;
-//             // }
-//             RGB rgb = hsl2rgb(hsl.h, hsl.s, hsl.l);
-//             (*cell).setColor(rgb.r, rgb.g, rgb.b);
-
-//             mix = spectral_mix({cellr, cellg, cellb}, {playerr, playerg, playerb}, 0.25);
-//             hsl = rgb2hsl(static_cast<float>(mix[0]),static_cast<float>(mix[1]),static_cast<float>(mix[2]));
-//             // if (hsl.s < 0.5) {
-//             //     hsl.s = 0.5;
-//             // }
-//             rgb = hsl2rgb(hsl.h, hsl.s, hsl.l);
-//             color[0] = rgb.r;
-//             color[1] = rgb.g;
-//             color[2] = rgb.b;
-//         }
-
-//         this->setColorFresh(false);
-//     }
-// }
-
 bool Player::loadMedia(SDL_Renderer *gRenderer)
 {
     // Loading success flag
@@ -321,65 +259,191 @@ bool Player::loadMedia(SDL_Renderer *gRenderer)
     }
     else
     {
-        for(int i=0; i<4; ++i) {
-            ground_collision_sprite_clips[i].x = i*40;
+        for (int i = 0; i < 4; ++i)
+        {
+            ground_collision_sprite_clips[i].x = i * 40;
             ground_collision_sprite_clips[i].y = 0;
             ground_collision_sprite_clips[i].w = 40;
             ground_collision_sprite_clips[i].h = 40;
         }
-    
     }
 
     return success;
 }
 
-void Player::physics_update(SDL_Renderer * gRenderer, int frame, World * world) {
-    this->physics_posx = physics_posx + x_velocity;
-    this->posx = static_cast<int>(physics_posx);
+void Player::physics_update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN_HEIGHT, int SCREEN_WIDTH)
+{
+    int w_unit = SCREEN_WIDTH / (sizeof(map[0]) / sizeof(int));
+    int h_unit = SCREEN_HEIGHT / (sizeof(map) / sizeof(map[0]));
+    int width = (sizeof(map[0]) / sizeof(int));
+    int height = (sizeof(map) / sizeof(map[0]));
 
-    this->physics_posy = physics_posy + y_velocity + gravity;
-    this->posy = static_cast<int>(physics_posy);
-    if (this->detect_ground_collision()) {
-        (*world).render_ground_collision(gRenderer, frame, getPosx(),getPosy());
+    double n_posx = (physics_posx + x_velocity);
+    double n_posy = (physics_posy + y_velocity + gravity);
+
+    if(n_posx < 0) {
+        n_posx = 0;
     }
-    
+    if(n_posx > SCREEN_WIDTH-40) {
+        n_posx = SCREEN_WIDTH-40;
+    }
+    if(n_posy < 0) {
+        n_posy = 0;
+    }
+    if(n_posy > SCREEN_HEIGHT-40) {
+        n_posy = SCREEN_HEIGHT-40;
+    }
 
-}
+    int left = n_posx / w_unit;
+    int right = (n_posx + 40) / w_unit;
+    int top = n_posy / h_unit;
+    int bottom = (n_posy + 40) / h_unit;
 
-void Player::physics_renderPlayer(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) {
-     // gSpriteSheetTexture.render( ( SCREEN_WIDTH - currentClip->w ) / 2, ( SCREEN_HEIGHT - currentClip->h ) / 2, currentClip );
-    // idlePlayerSpriteSheetTexture.render(0, 0, gRenderer, currentClip);
+    bool ground_collision = false;
 
-    // int color[] = {255, 0, 255, 255};
-   
-    
-        // SDL_Rect *currentClip = &pooPlayerSpriteClips[0];
-        // pooPlayerSpriteSheetTexture.setColor(color[0], color[1], color[2]);
-        // pooPlayerSpriteSheetTexture.render(this->posx, this->posy, gRenderer, currentClip);
-        SDL_Rect player = {this->posx, this->posy,40,40};
-        SDL_SetRenderDrawColor(gRenderer, 255,0,0,255);
-        SDL_RenderFillRect(gRenderer,&player);
-}
 
-void Player::updateVelocityX(double delta) {
-    double cap = 3.0;
-    this->x_velocity += delta;
-    if (abs(this->x_velocity) > cap) {
-        if( this->x_velocity > 0) {
-            this->x_velocity = cap;
-        } else {
-            this->x_velocity = -1.0 * cap;
+    if (left >= 0)
+    {
+        // bottom left
+        if (bottom < height && map[bottom][left] == 1)
+        {
+            int overlap_y = abs((n_posy + 40) - (h_unit * bottom));
+            // int overlap_x = abs(n_posx - (w_unit * left + w_unit));
+            int overlap_x = abs(n_posx - (w_unit * (n_posx / w_unit)+ w_unit));
+
+
+            if (overlap_y < overlap_x && (overlap_y != 0|| overlap_x !=0))
+            {
+                n_posy = bottom * h_unit - 40;
+                ground_collision = true;
+            }
+            else
+            {
+                                n_posx = left * w_unit + w_unit;
+                                cout << overlap_x << endl;
+
+                // n_posx = left * w_unit;
+            }
+        }
+        // top left
+        if (top >= 0 && map[top][left] == 1)
+        {
+            int overlap_y = abs((n_posy) - (h_unit * top + h_unit));
+            int overlap_x = abs(n_posx - (w_unit * left + w_unit));
+            if (overlap_y < overlap_x && (overlap_y != 0|| overlap_x !=0))
+            {
+                n_posy = top * h_unit + h_unit;
+            }
+            else
+            {
+                n_posx = left * w_unit + w_unit;
+            }
+        }
+    }
+    if (right < width)
+    {
+        // bottom right
+        if (bottom < height && map[bottom][right] == 1)
+        {
+            int overlap_y = abs((n_posy + 40) - (h_unit * bottom));
+            int overlap_x = abs((n_posx + 40) - (w_unit * right));
+            if (overlap_y < overlap_x && (overlap_y != 0|| overlap_x !=0))
+            {
+                n_posy = bottom * h_unit - 40;
+                ground_collision = true;
+            }
+            else
+            {
+                n_posx = right * w_unit - 40;
+            }
+        }
+        // top right
+        if (top >= 0 && map[top][right] == 1)
+        {
+            int overlap_y = abs((n_posy) - (h_unit * top + h_unit));
+            int overlap_x = abs((n_posx + 40) - (w_unit * right));
+            if (overlap_y < overlap_x && (overlap_y != 0|| overlap_x !=0))
+            {
+                n_posy = top * h_unit + h_unit;
+            }
+            else
+            {
+                n_posx = right * w_unit - 40;
+            }
         }
     }
 
+    this->physics_posx = n_posx;
+    this->posx = static_cast<int>(physics_posx);
+
+    this->physics_posy = n_posy;
+    this->posy = static_cast<int>(physics_posy);
+
+    if (ground_collision)
+    {
+        (*world).add_ground_collision(posx, posy);
+    }
+    (*world).render_ground_collision(gRenderer, frame, getPosx(), getPosy());
 }
 
-bool Player::detect_ground_collision() {
-    if(this->posy+40 >= 288) {
-        this->posy = 248;
-        this->physics_posy = 248;
+void Player::physics_renderPlayer(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
+{
+    // gSpriteSheetTexture.render( ( SCREEN_WIDTH - currentClip->w ) / 2, ( SCREEN_HEIGHT - currentClip->h ) / 2, currentClip );
+    // idlePlayerSpriteSheetTexture.render(0, 0, gRenderer, currentClip);
+
+    // int color[] = {255, 0, 255, 255};
+
+    // SDL_Rect *currentClip = &pooPlayerSpriteClips[0];
+    // pooPlayerSpriteSheetTexture.setColor(color[0], color[1], color[2]);
+    // pooPlayerSpriteSheetTexture.render(this->posx, this->posy, gRenderer, currentClip);
+    SDL_Rect player = {this->posx, this->posy, 40, 40};
+    SDL_SetRenderDrawColor(gRenderer, 255, 0, 0, 255);
+    SDL_RenderFillRect(gRenderer, &player);
+}
+
+void Player::updateVelocityX(double delta)
+{
+    double cap = 3.0;
+    this->x_velocity += delta;
+    if (abs(this->x_velocity) > cap)
+    {
+        if (this->x_velocity > 0)
+        {
+            this->x_velocity = cap;
+        }
+        else
+        {
+            this->x_velocity = -1.0 * cap;
+        }
+    }
+}
+
+bool Player::detect_ground_collision(int SCREEN_HEIGHT, int SCREEN_WIDTH)
+{
+    int p = map[0][0];
+    int w_unit = SCREEN_WIDTH / (sizeof(map[0]) / sizeof(int));
+    int h_unit = SCREEN_HEIGHT / (sizeof(map) / sizeof(map[0]));
+
+    int row = (posy + 40) / h_unit;
+    int col = posx / w_unit;
+
+    if (row > 5 || col > 7)
+    {
+        throw std::invalid_argument("player out of bounds");
+    }
+
+    if (map[row][col] == 1)
+    {
+        posy = (row - 1) * h_unit + h_unit - 40;
+        physics_posy = (row - 1) * h_unit + h_unit - 40;
         return true;
     }
+    // if(row < SCREEN_HEIGHT/(sizeof(map)/sizeof(map[0]))-1 && map[col+1][row] == 1) {
+    //     if(posy >= (col+1)*h_unit) {
+    //         posy = col*h_unit;
+    //         physics_posy = col*h_unit;
+    //         return true;
+    //     }
+    // }
     return false;
 }
-
