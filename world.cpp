@@ -2,9 +2,8 @@
 #include <vector>
 #include <set>
 #include <SDL2/SDL.h>
-#include "levels/level.cpp"
-#include "cell.cpp"
 #include <algorithm>
+#include "ltexture.cpp"
 #include "map.cpp"
 using namespace std;
 
@@ -57,17 +56,15 @@ public:
 
 class World
 {
-public:
-    World();
-    int coount = 0;
-    void render(SDL_Renderer *, int, int, int);
-    void render_ground_collision(SDL_Renderer *, int, int, int);
-    bool loadMedia(SDL_Renderer *);
-    void poo(SDL_Renderer *);
-    void add_ground_collision(int, int);
-
 private:
     vector<Unit *> ground_collisions;
+
+public:
+    World();
+    void render(SDL_Renderer *, int, int, int);
+    void render_ground_collision(SDL_Renderer *, int, int, int, int);
+    bool loadMedia(SDL_Renderer *);
+    void add_ground_collision(int, int);
 };
 
 World::World()
@@ -78,20 +75,16 @@ World::World()
 void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, int offset)
 {
     SDL_Rect bg = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
-    // ground = {50,50,50,50};
-    SDL_SetRenderDrawColor(gRenderer, 255, 255, 255, 255);
-    SDL_RenderFillRect(gRenderer, &bg);
     int i = map[0][0];
     int w_unit = SCREEN_WIDTH / (sizeof(map[0]) / sizeof(int));
     int h_unit = SCREEN_HEIGHT / (sizeof(map) / sizeof(map[0]));
-    for (int col = 0; col < sizeof(map[0]) / sizeof(int); ++col)
+    for (int col = 0; col < sizeof(full_map[0]) / sizeof(int); ++col)
     {
-        for (int row = 0; row < sizeof(map) / sizeof(map[0]); ++row)
+        for (int row = 0; row < sizeof(full_map) / sizeof(full_map[0]); ++row)
         {
-            if (map[row][col] == 1)
+            if (full_map[row][col] == 1)
             {
                 SDL_Rect ground = {col * w_unit - offset, row * h_unit, w_unit, h_unit};
-                // ground = {50,50,50,50};
                 SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
                 SDL_RenderFillRect(gRenderer, &ground);
                 SDL_SetRenderDrawColor(gRenderer, 0, 255, 0, 255);
@@ -99,27 +92,6 @@ void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT,
             }
         }
     }
-
-    // on deck
-    for (int col = 0; col < sizeof(on_deck[0]) / sizeof(int); ++col)
-    {
-        for (int row = 0; row < sizeof(on_deck) / sizeof(on_deck[0]); ++row)
-        {
-            if (on_deck[row][col] == 1)
-            {
-                SDL_Rect ground = {((sizeof(map[0]) / sizeof(int))+col) * w_unit - offset, row * h_unit, w_unit, h_unit};
-                // ground = {50,50,50,50};
-                SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
-                SDL_RenderFillRect(gRenderer, &ground);
-                SDL_SetRenderDrawColor(gRenderer, 0, 255, 0, 255);
-                SDL_RenderDrawRect(gRenderer, &ground);
-            }
-        }
-    }
-
-    // SDL_Rect ground = {0, 288, SCREEN_WIDTH, SCREEN_HEIGHT - 288};
-    // SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
-    // SDL_RenderFillRect(gRenderer, &ground);
 }
 
 bool World::loadMedia(SDL_Renderer *gRenderer)
@@ -166,13 +138,13 @@ void World::add_ground_collision(int xpos, int ypos)
     }
 }
 
-void World::render_ground_collision(SDL_Renderer *gRenderer, int frame, int xpos, int ypos)
+void World::render_ground_collision(SDL_Renderer *gRenderer, int frame, int xpos, int ypos, int offset)
 {
     for (int j = 0; j < ground_collisions.size(); j++)
     {
         Unit *i = ground_collisions[j];
         SDL_Rect *currentClip = &ground_collision_sprite_clips[(*i).getFrame()];
-        SDL_Rect renderQuad = {(*i).getX(), (*i).getY(), 40, 40};
+        SDL_Rect renderQuad = {(*i).getX() - offset, (*i).getY(), 40, 40};
         ground_collision_sprite_sheet.render(0, 0, renderQuad, gRenderer, currentClip);
         if ((*i).getFrame() != 3)
         {
@@ -190,12 +162,5 @@ void World::render_ground_collision(SDL_Renderer *gRenderer, int frame, int xpos
                 ground_collisions.erase(nth);
             }
         }
-    }
-}
-
-void World ::poo(SDL_Renderer *gRenderer)
-{
-    for (auto animation_cubit : this->ground_collisions) // access by reference to avoid copying
-    {
     }
 }

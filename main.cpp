@@ -1,7 +1,3 @@
-/*This source code copyrighted by Lazy Foo' Productions 2004-2024
-and may not be redistributed without written permission.*/
-
-// Using SDL, SDL_image, SDL_ttf, standard IO, strings, and string streams
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
@@ -9,7 +5,6 @@ and may not be redistributed without written permission.*/
 #include <string>
 #include <sstream>
 #include "player.cpp"
-// #include "ltexture.cpp"
 #include "ltimer.cpp"
 
 // Screen dimension constants
@@ -32,19 +27,6 @@ SDL_Window *gWindow = NULL;
 
 // The window renderer
 SDL_Renderer *gRenderer = NULL;
-
-// //Walking animation
-// const int WALKING_ANIMATION_FRAMES = 4;
-// SDL_Rect gSpriteClips[ WALKING_ANIMATION_FRAMES ];
-// LTexture gSpriteSheetTexture;
-
-// Globally used font
-TTF_Font *gFont = NULL;
-
-static bool firstt = true;
-
-// Scene textures
-// LTexture gFPSTextTexture;
 
 bool init()
 {
@@ -93,13 +75,6 @@ bool init()
 					printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
 					success = false;
 				}
-
-				// Initialize SDL_ttf
-				// if (TTF_Init() == -1)
-				// {
-				// 	printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
-				// 	success = false;
-				// }
 			}
 		}
 	}
@@ -110,16 +85,7 @@ bool init()
 void close()
 {
 	// Free loaded images
-	idlePlayerSpriteSheetTexture.free();
-	walkingRightPlayerSpriteSheetTexture.free();
-	walkingLeftPlayerSpriteSheetTexture.free();
-
-	// Free loaded images
-	// gFPSTextTexture.free();
-
-	// Free global font
-	TTF_CloseFont(gFont);
-	gFont = NULL;
+	ground_collision_sprite_sheet.free();
 
 	// Destroy window
 	SDL_DestroyRenderer(gRenderer);
@@ -131,10 +97,6 @@ void close()
 	TTF_Quit();
 	IMG_Quit();
 	SDL_Quit();
-}
-
-void reset()
-{
 }
 
 int main(int argc, char *args[])
@@ -161,7 +123,7 @@ int main(int argc, char *args[])
 		float windowX, windowY;
 
 		// Load media
-		if (!(player.loadMedia(gRenderer) && Cell::loadMedia(gRenderer) && world.loadMedia(gRenderer)))
+		if (!(world.loadMedia(gRenderer)))
 		{
 			printf("Failed to load media!\n");
 		}
@@ -211,89 +173,71 @@ int main(int argc, char *args[])
 					{
 						if (e.key.keysym.sym == SDLK_RIGHT)
 						{
-							// can accelerate out of control
-							// player.x_velocity += 0.5;
-							if (player.x_velocity == 0.0)
+							if (player.getVelocityX() == 0.0)
 							{
-								player.x_velocity = 1;
+								player.setVelocityX(1);
 							}
-							player.updateVelocityX(0.4);
+							player.setVelocityX(player.getVelocityX()+0.4);
 						}
 						if (e.key.keysym.sym == SDLK_LEFT)
 						{
-							// can accelerate out of control
-							// player.x_velocity += -0.5;
-							if (player.x_velocity == 0.0)
+							if (player.getVelocityX() == 0.0)
 							{
-								player.x_velocity = -1;
+								player.setVelocityX(-1);
 							}
-							player.updateVelocityX(-0.4);
+							player.setVelocityX(player.getVelocityX()-0.4);
 						}
 						if (e.key.keysym.sym == SDLK_UP)
 						{
-							// can accelerate out of control
-							// player.x_velocity += -0.5;
 							if (player_jump)
 							{
-								if (player.y_velocity == 0.0)
+								if (player.getVelocityY() == 0.0)
 								{
-									player.y_velocity = -12.0;
+									player.setVelocityY(-12);
 								}
 								else
 								{
-									player.y_velocity += .04;
+									player.setVelocityY(player.getVelocityY() + .04);
 								}
 							}
-							// if (player.y_velocity <= -4.0)
-							// {
-							// 	player_jump = false;
-							// } else {
-							// 	player_jump = true;
-							// }
 						}
 						else
 						{
-							player.y_velocity == 0.0;
+							player.setVelocityY(0);
 						}
 						if (e.key.keysym.sym == SDLK_DOWN)
 						{
-							// can accelerate out of control
-							// player.x_velocity += -0.5;
-							if (player.y_velocity == 0.0)
+							if (player.getVelocityY() == 0.0)
 							{
-								player.y_velocity = 1;
+								player.setVelocityY(1);
 							}
-							player.y_velocity += 0.4;
+							player.setVelocityY(player.getVelocityY() + .04);
+
 						}
 					}
 					if (e.type == SDL_KEYUP)
 					{
 						if (e.key.keysym.sym == SDLK_RIGHT)
 						{
-							player.x_velocity = 0.0;
-						}
-						if (e.key.keysym.sym == SDLK_RIGHT)
-						{
-							player.x_velocity = 0.0;
+							player.setVelocityX(0);
 						}
 						if (e.key.keysym.sym == SDLK_LEFT)
 						{
-							player.x_velocity = 0.0;
+							player.setVelocityX(0);
 						}
 						if (e.key.keysym.sym == SDLK_UP)
 						{
-							player.y_velocity = 0.0;
+							player.setVelocityY(0);
 							jumped_frame = 0;
 						}
 						if (e.key.keysym.sym == SDLK_DOWN)
 						{
-							player.y_velocity = 0.0;
+							player.setVelocityY(0);
 							jumped_frame = 0;
 						}
 					}
-					SDL_GetMouseState(&xMouse, &yMouse);
-					// jump right
 				}
+				cout << player.getVelocityX() << endl;
 
 				// Calculate and correct fps
 				float avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.f);
@@ -306,26 +250,18 @@ int main(int argc, char *args[])
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(gRenderer);
 		
-		
-				// if (player.getPosx() > 100)
-				// {
-				// 	shift();
-				// 	player.setPosx(player.getPosx()-100);
-				// 	firstt = false;
-				// }
-				int merde = player.getPosx()-50;
-				cout << merde << endl;
-				if(merde < 0) merde = 0;
-				if(merde > 200) merde = 200;
+				int offset = player.getPosx()-50;
+				if(offset < 0) offset = 0;
+				if(offset > 200) offset = 200;
 	
 				// Render the world
-				world.render(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT, merde);
+				world.render(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT, offset);
 
 				// // Update the player
-				player.physics_update(gRenderer, frame, &world, SCREEN_HEIGHT, SCREEN_WIDTH);
+				player.update(gRenderer, frame, &world, SCREEN_HEIGHT, SCREEN_WIDTH, offset);
 
 				// Render the player
-				player.physics_renderPlayer(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT,  merde);
+				player.render(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT, offset);
 
 				// Update screen
 				SDL_RenderPresent(gRenderer);
@@ -335,7 +271,7 @@ int main(int argc, char *args[])
 				++frame;
 
 				// Cycle Animation
-				if (frame / 4 >= IDLE_ANIMATION_FRAMES)
+				if (frame / 4 >= 4)
 				{
 					frame = 0;
 				}
