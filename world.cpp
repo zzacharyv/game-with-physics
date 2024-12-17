@@ -60,7 +60,7 @@ class World
 public:
     World();
     int coount = 0;
-    void render(SDL_Renderer *, int, int);
+    void render(SDL_Renderer *, int, int, int);
     void render_ground_collision(SDL_Renderer *, int, int, int);
     bool loadMedia(SDL_Renderer *);
     void poo(SDL_Renderer *);
@@ -75,15 +75,22 @@ World::World()
     ground_collisions = {};
 }
 
-void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
+void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, int offset)
 {
+    SDL_Rect bg = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+    // ground = {50,50,50,50};
+    SDL_SetRenderDrawColor(gRenderer, 255, 255, 255, 255);
+    SDL_RenderFillRect(gRenderer, &bg);
     int i = map[0][0];
-    int w_unit = SCREEN_WIDTH/(sizeof(map[0])/sizeof(int));
-    int h_unit = SCREEN_HEIGHT/(sizeof(map)/sizeof(map[0]));
-    for(int col=0; col<sizeof(map[0])/sizeof(int); ++col) {
-        for(int row=0; row<sizeof(map)/sizeof(map[0]); ++row) {
-            if (map[row][col] == 1) {
-                SDL_Rect ground = {col*w_unit, row*h_unit, w_unit, h_unit};
+    int w_unit = SCREEN_WIDTH / (sizeof(map[0]) / sizeof(int));
+    int h_unit = SCREEN_HEIGHT / (sizeof(map) / sizeof(map[0]));
+    for (int col = 0; col < sizeof(map[0]) / sizeof(int); ++col)
+    {
+        for (int row = 0; row < sizeof(map) / sizeof(map[0]); ++row)
+        {
+            if (map[row][col] == 1)
+            {
+                SDL_Rect ground = {col * w_unit - offset, row * h_unit, w_unit, h_unit};
                 // ground = {50,50,50,50};
                 SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
                 SDL_RenderFillRect(gRenderer, &ground);
@@ -92,6 +99,24 @@ void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
             }
         }
     }
+
+    // on deck
+    for (int col = 0; col < sizeof(on_deck[0]) / sizeof(int); ++col)
+    {
+        for (int row = 0; row < sizeof(on_deck) / sizeof(on_deck[0]); ++row)
+        {
+            if (on_deck[row][col] == 1)
+            {
+                SDL_Rect ground = {((sizeof(map[0]) / sizeof(int))+col) * w_unit - offset, row * h_unit, w_unit, h_unit};
+                // ground = {50,50,50,50};
+                SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+                SDL_RenderFillRect(gRenderer, &ground);
+                SDL_SetRenderDrawColor(gRenderer, 0, 255, 0, 255);
+                SDL_RenderDrawRect(gRenderer, &ground);
+            }
+        }
+    }
+
     // SDL_Rect ground = {0, 288, SCREEN_WIDTH, SCREEN_HEIGHT - 288};
     // SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
     // SDL_RenderFillRect(gRenderer, &ground);
@@ -145,7 +170,7 @@ void World::render_ground_collision(SDL_Renderer *gRenderer, int frame, int xpos
 {
     for (int j = 0; j < ground_collisions.size(); j++)
     {
-        Unit * i = ground_collisions[j];
+        Unit *i = ground_collisions[j];
         SDL_Rect *currentClip = &ground_collision_sprite_clips[(*i).getFrame()];
         SDL_Rect renderQuad = {(*i).getX(), (*i).getY(), 40, 40};
         ground_collision_sprite_sheet.render(0, 0, renderQuad, gRenderer, currentClip);
@@ -155,18 +180,18 @@ void World::render_ground_collision(SDL_Renderer *gRenderer, int frame, int xpos
             {
                 (*i).setFrame((*i).getFrame() + 1);
             }
-        } else
+        }
+        else
+        {
+            if (frame == 15)
             {
-                if (frame == 15)
-                {
-                    vector<Unit *>::iterator nth = ground_collisions.begin() + j;
-                    delete ground_collisions[j];
-                    ground_collisions.erase(nth);
-                }
+                vector<Unit *>::iterator nth = ground_collisions.begin() + j;
+                delete ground_collisions[j];
+                ground_collisions.erase(nth);
             }
+        }
     }
 }
-
 
 void World ::poo(SDL_Renderer *gRenderer)
 {

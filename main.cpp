@@ -41,6 +41,8 @@ SDL_Renderer *gRenderer = NULL;
 // Globally used font
 TTF_Font *gFont = NULL;
 
+static bool firstt = true;
+
 // Scene textures
 // LTexture gFPSTextTexture;
 
@@ -135,7 +137,6 @@ void reset()
 {
 }
 
-
 int main(int argc, char *args[])
 {
 	// Start up SDL and create window
@@ -212,7 +213,8 @@ int main(int argc, char *args[])
 						{
 							// can accelerate out of control
 							// player.x_velocity += 0.5;
-							if( player.x_velocity == 0.0) {
+							if (player.x_velocity == 0.0)
+							{
 								player.x_velocity = 1;
 							}
 							player.updateVelocityX(0.4);
@@ -221,7 +223,8 @@ int main(int argc, char *args[])
 						{
 							// can accelerate out of control
 							// player.x_velocity += -0.5;
-							if( player.x_velocity == 0.0) {
+							if (player.x_velocity == 0.0)
+							{
 								player.x_velocity = -1;
 							}
 							player.updateVelocityX(-0.4);
@@ -232,12 +235,14 @@ int main(int argc, char *args[])
 							// player.x_velocity += -0.5;
 							if (player_jump)
 							{
-								if (player.y_velocity == 0.0) {
+								if (player.y_velocity == 0.0)
+								{
 									player.y_velocity = -12.0;
-								} else {
+								}
+								else
+								{
 									player.y_velocity += .04;
 								}
-								
 							}
 							// if (player.y_velocity <= -4.0)
 							// {
@@ -245,14 +250,17 @@ int main(int argc, char *args[])
 							// } else {
 							// 	player_jump = true;
 							// }
-						} else {
+						}
+						else
+						{
 							player.y_velocity == 0.0;
 						}
 						if (e.key.keysym.sym == SDLK_DOWN)
 						{
 							// can accelerate out of control
 							// player.x_velocity += -0.5;
-							if( player.y_velocity == 0.0) {
+							if (player.y_velocity == 0.0)
+							{
 								player.y_velocity = 1;
 							}
 							player.y_velocity += 0.4;
@@ -276,13 +284,11 @@ int main(int argc, char *args[])
 						{
 							player.y_velocity = 0.0;
 							jumped_frame = 0;
-							
 						}
 						if (e.key.keysym.sym == SDLK_DOWN)
 						{
 							player.y_velocity = 0.0;
 							jumped_frame = 0;
-							
 						}
 					}
 					SDL_GetMouseState(&xMouse, &yMouse);
@@ -295,23 +301,31 @@ int main(int argc, char *args[])
 				{
 					avgFPS = 0;
 				}
-
-				SDL_Rect poo = {0,0,SCREEN_WIDTH-20,SCREEN_HEIGHT-20};
-				// SDL_RenderSetViewport(gRenderer,&poo);
 				
-
 				// Clear screen
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(gRenderer);
-
+		
+		
+				// if (player.getPosx() > 100)
+				// {
+				// 	shift();
+				// 	player.setPosx(player.getPosx()-100);
+				// 	firstt = false;
+				// }
+				int merde = player.getPosx()-50;
+				cout << merde << endl;
+				if(merde < 0) merde = 0;
+				if(merde > 200) merde = 200;
+	
 				// Render the world
-				world.render(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+				world.render(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT, merde);
 
 				// // Update the player
 				player.physics_update(gRenderer, frame, &world, SCREEN_HEIGHT, SCREEN_WIDTH);
 
 				// Render the player
-				player.physics_renderPlayer(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+				player.physics_renderPlayer(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT,  merde);
 
 				// Update screen
 				SDL_RenderPresent(gRenderer);

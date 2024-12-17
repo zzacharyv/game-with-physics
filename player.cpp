@@ -78,11 +78,13 @@ public:
 
     void render(SDL_Renderer *gRenderer, int meatDimensions[2], int SCREEN_WIDTH, int SCREEN_HEIGHT);
     void renderPlayer(SDL_Renderer *gRenderer, int frame, int meatDimensions[2], int SCREEN_WIDTH, int SCREEN_HEIGHT);
-    void physics_renderPlayer(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT);
+    void physics_renderPlayer(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, int offset);
     bool loadMedia(SDL_Renderer *gRenderer);
 
     bool detect_ground_collision(int, int);
     void render_ground_collision(SDL_Renderer *, int);
+
+    void doIT(int n_posx, int n_posy, int SCREEN_WIDTH, int SCREEN_HEIGHT);
 };
 
 int Player::getPosx()
@@ -116,6 +118,7 @@ bool Player::isColorFresh()
 void Player::setPosx(int posx)
 {
     this->posx = posx;
+    physics_posx = posx;
 }
 void Player::setPosy(int posy)
 {
@@ -150,9 +153,9 @@ void Player::setColor(int r, int g, int b)
 
 Player::Player()
 {
-    posx = 0;
+    posx = 250;
     posy = 0;
-    physics_posx = 0;
+    physics_posx = 250;
     physics_posy = 0;
     x_velocity = 0.0;
     y_velocity = 0.0;
@@ -273,64 +276,329 @@ bool Player::loadMedia(SDL_Renderer *gRenderer)
 
 void Player::physics_update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN_HEIGHT, int SCREEN_WIDTH)
 {
+
+    combine();
+
     int w_unit = SCREEN_WIDTH / (sizeof(map[0]) / sizeof(int));
     int h_unit = SCREEN_HEIGHT / (sizeof(map) / sizeof(map[0]));
-    int width = (sizeof(map[0]) / sizeof(int));
-    int height = (sizeof(map) / sizeof(map[0]));
+    int width = ((sizeof(map[0]) + sizeof(on_deck[0])) / sizeof(int));
+    int height = ((sizeof(map)) / sizeof(map[0]));
 
     double n_posx = (physics_posx + x_velocity);
-    double n_posy = (physics_posy + y_velocity + gravity);
-
-    if(n_posx < 0) {
-        n_posx = 0;
-    }
-    if(n_posx > SCREEN_WIDTH-40) {
-        n_posx = SCREEN_WIDTH-40;
-    }
-    if(n_posy < 0) {
-        n_posy = 0;
-    }
-    if(n_posy > SCREEN_HEIGHT-40) {
-        n_posy = SCREEN_HEIGHT-40;
-    }
+    double n_posy = physics_posy;
 
     int left = n_posx / w_unit;
     int right = (n_posx + 40) / w_unit;
     int top = n_posy / h_unit;
     int bottom = (n_posy + 40) / h_unit;
 
+    int x = (n_posx + (40 / 2)) / w_unit;
+    int y = (n_posy + (40 / 2)) / h_unit;
+
+    // horizontal collision ~~~~~~~~~~~~~~~~~~~~~~~~
+    // left upper tile
+    if (x - 1 >= 0 && x - 1 < 10 && y - 1 < 6 && y - 1 >= 0)
+    {
+        if (combined[y - 1][x - 1] == 1)
+        {
+            if (n_posy < (y)*h_unit)
+            {
+                if (n_posx < (x) * w_unit)
+                {
+                    n_posx = (x) * w_unit;
+                }
+            }
+        }
+    }
+
+    // left center tile
+    if (x - 1 >= 0 && x - 1 < 10 && y < 6 && y >= 0)
+    {
+        if (combined[y][x - 1] == 1)
+        {
+                if (n_posx < (x) * w_unit)
+                {
+                    n_posx = (x) * w_unit;
+                }
+        }
+    }
+
+    // left lower tile
+    if (x - 1 >= 0 && x - 1 < 10 && y + 1 < 6 && y + 1 >= 0)
+    {
+        if (combined[y + 1][x - 1] == 1)
+        {
+            if (n_posy +40 > (y+1)*h_unit)
+            {
+                if (n_posx < (x) * w_unit)
+                {
+                    n_posx = (x) * w_unit;
+                }
+            }
+        }
+    }
+
+    // right upper tile
+    if (x + 1 >= 0 && x + 1 < 10 && y - 1 < 6 && y - 1 >= 0)
+    {
+        if (combined[y - 1][x + 1] == 1)
+        {
+            if (n_posy < (y)*h_unit)
+            {
+                if (n_posx +40 > (x+1) * w_unit)
+                {
+                    n_posx = (x+1) * w_unit - 40;
+                }
+            }
+        }
+    }
+
+    // right center tile
+    if (x + 1 >= 0 && x + 1 < 10 && y < 6 && y >= 0)
+    {
+        if (combined[y][x + 1] == 1)
+        {
+                if (n_posx+40 > (x+1) * w_unit)
+                {
+                    n_posx = (x+1) * w_unit-40;
+                }
+        }
+    }
+
+    // right lower tile
+    if (x + 1 >= 0 && x + 1 < 10 && y + 1 < 6 && y + 1 >= 0)
+    {
+        if (combined[y + 1][x + 1] == 1)
+        {
+            if (n_posy+40 > (y+1)*h_unit)
+            {
+                if (n_posx +40 > (x+1) * w_unit)
+                {
+                    n_posx = (x+1) * w_unit - 40;
+                }
+            }
+        }
+    }
+
+    // vertical collision ~~~~~~~~~~~~~~~~~~~~~~~~
+    n_posy = (physics_posy + y_velocity + gravity);
+    x = (n_posx + (40 / 2)) / w_unit;
+
+    // upper left tile
+    if (x - 1 >= 0 && x - 1 < 10 && y - 1 < 6 && y - 1 >= 0)
+    {
+        if (combined[y - 1][x - 1] == 1)
+        {
+            if (n_posx < (x)*w_unit)
+            {
+                if (n_posy < (y) * h_unit)
+                {
+                    n_posy = (y) * h_unit;
+                }
+            }
+        }
+    }
+
+    // upper center tile
+    if (x >= 0 && x < 10 && y - 1 < 6 && y - 1 >= 0)
+    {
+        if (combined[y - 1][x] == 1)
+        {
+            if (n_posy < (y)*h_unit)
+            {
+                n_posy = (y)*h_unit;
+            }
+        }
+    }
+
+    // upper right tile
+    if (x + 1 >= 0 && x + 1 < 10 && y - 1 < 6 && y - 1 >= 0)
+    {
+        if (combined[y - 1][x + 1] == 1)
+        {
+            if (n_posx + 40 > (x+1)*w_unit)
+            {
+                if (n_posy < (y) * h_unit)
+                {
+                    n_posy = (y) * h_unit;
+                }
+            }
+        }
+    }
+
+    // bottom left tile
+    if (x - 1 >= 0 && x - 1 < 10 && y + 1 < 6 && y + 1 >= 0)
+    {
+        if (combined[y + 1][x - 1] == 1)
+        {
+            if (n_posx < (x)*w_unit)
+            {
+                if (n_posy + 40 > (y + 1) * h_unit)
+                {
+                    n_posy = (y + 1) * h_unit - 40;
+                }
+            }
+        }
+    }
+
+    // bottom center tile
+     if (x >= 0 && x < 10 && y + 1 < 6 && y + 1 >= 0)
+    {
+        if (combined[y + 1][x] == 1)
+        {
+                if (n_posy + 40 > (y + 1) * h_unit)
+                {
+                    n_posy = (y + 1) * h_unit - 40;
+                }
+        }
+    }
+
+    // bottom right tile
+    if (x + 1 >= 0 && x + 1 < 10 && y + 1 < 6 && y + 1 >= 0)
+    {
+        if (combined[y + 1][x + 1] == 1)
+        {
+            if (n_posx+40 > (x+1)*w_unit)
+            {
+                if (n_posy + 40 > (y + 1) * h_unit)
+                {
+                    n_posy = (y + 1) * h_unit - 40;
+                }
+            }
+        }
+    }
+
+    // for (int i = x - 1; i < x + 2; i++)
+    // {
+    //     if (i >= 0 && i < 10)
+    //     {
+    //         if (y - 1 >= 0 && y - 1 < 6)
+    //         {
+    //             if (combined[y - 1][i] == 1)
+    //             {
+    //                 if ((y)*h_unit > n_posy)
+    //                 {
+    //                     n_posy = physics_posy;
+    //                     n_posx = physics_posx;
+    //                     cout << "collided!" << endl;
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    // for (int i = x - 1; i < x + 2; i++)
+    // {
+    //     if (i >= 0 && i < 10)
+    //     {
+
+    //         if (y + 1 >= 0 && y + 1 < 6)
+    //         {
+    //             if (combined[y + 1][i] == 1)
+    //             {
+    //                 if ((y + 1) * h_unit < (n_posy + 40))
+    //                 {
+    //                     n_posy = physics_posy;
+    //                     n_posx = physics_posx;
+    //                     cout << "collided!" << endl;
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
+    // for (int j = y - 1; j < y + 2; j++)
+    // {
+    //     for (int i = x - 1; i < x + 2; i++)
+    //     {
+    //         if (j >= 0 && j < 6 && i >= 0 && i < 10) {
+    //             if(combined[j][i] == 1) {
+    //                 if((i+1)*w_unit > n_posx) {
+    //                     if(j*h_unit > n_posy+40) {
+    //                         cout << "collided" << endl;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
+    // cout << endl;
+
+    // doIT(n_posx, physics_posy,SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // doIT(n_posx, n_posy,SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // if (n_posx < 0)
+    // {
+    //     n_posx = 0;
+    // }
+    // if (n_posx > SCREEN_WIDTH - 40)
+    // {
+    //     n_posx = SCREEN_WIDTH - 40;
+    // }
+    // if (n_posy < 0)
+    // {
+    //     n_posy = 0;
+    // }
+    // if (n_posy > SCREEN_HEIGHT - 40)
+    // {
+    //     n_posy = SCREEN_HEIGHT - 40;
+    // }
+
     bool ground_collision = false;
 
+    this->physics_posx = n_posx;
+    this->posx = static_cast<int>(physics_posx);
+
+    this->physics_posy = n_posy;
+    this->posy = static_cast<int>(physics_posy);
+
+    if (ground_collision)
+    {
+        (*world).add_ground_collision(posx, posy);
+    }
+    // (*world).render_ground_collision(gRenderer, frame, getPosx(), getPosy());
+}
+
+void Player::doIT(int n_posx, int n_posy, int SCREEN_WIDTH, int SCREEN_HEIGHT)
+{
+
+    int w_unit = SCREEN_WIDTH / (sizeof(map[0]) / sizeof(int));
+    int h_unit = SCREEN_HEIGHT / (sizeof(map) / sizeof(map[0]));
+    int width = ((sizeof(map[0]) + sizeof(on_deck[0])) / sizeof(int));
+    int height = ((sizeof(map)) / sizeof(map[0]));
+
+    int left = n_posx / w_unit;
+    int right = (n_posx + 40) / w_unit;
+    int top = n_posy / h_unit;
+    int bottom = (n_posy + 40) / h_unit;
 
     if (left >= 0)
     {
         // bottom left
-        if (bottom < height && map[bottom][left] == 1)
+        if (bottom < height && combined[bottom][left] == 1)
         {
             int overlap_y = abs((n_posy + 40) - (h_unit * bottom));
             // int overlap_x = abs(n_posx - (w_unit * left + w_unit));
-            int overlap_x = abs(n_posx - (w_unit * (n_posx / w_unit)+ w_unit));
+            int overlap_x = abs(n_posx - (w_unit * (n_posx / w_unit) + w_unit));
 
-
-            if (overlap_y < overlap_x && (overlap_y != 0|| overlap_x !=0))
+            if (overlap_y < overlap_x && (overlap_y != 0 || overlap_x != 0))
             {
                 n_posy = bottom * h_unit - 40;
-                ground_collision = true;
+                // ground_collision = true;
             }
             else
             {
-                                n_posx = left * w_unit + w_unit;
-                                cout << overlap_x << endl;
-
+                n_posx = left * w_unit + w_unit;
                 // n_posx = left * w_unit;
             }
         }
         // top left
-        if (top >= 0 && map[top][left] == 1)
+        if (top >= 0 && combined[top][left] == 1)
         {
             int overlap_y = abs((n_posy) - (h_unit * top + h_unit));
             int overlap_x = abs(n_posx - (w_unit * left + w_unit));
-            if (overlap_y < overlap_x && (overlap_y != 0|| overlap_x !=0))
+            if (overlap_y < overlap_x && (overlap_y != 0 || overlap_x != 0))
             {
                 n_posy = top * h_unit + h_unit;
             }
@@ -343,14 +611,14 @@ void Player::physics_update(SDL_Renderer *gRenderer, int frame, World *world, in
     if (right < width)
     {
         // bottom right
-        if (bottom < height && map[bottom][right] == 1)
+        if (bottom < height && combined[bottom][right] == 1)
         {
             int overlap_y = abs((n_posy + 40) - (h_unit * bottom));
             int overlap_x = abs((n_posx + 40) - (w_unit * right));
-            if (overlap_y < overlap_x && (overlap_y != 0|| overlap_x !=0))
+            if (overlap_y < overlap_x && (overlap_y != 0 || overlap_x != 0))
             {
                 n_posy = bottom * h_unit - 40;
-                ground_collision = true;
+                // ground_collision = true;
             }
             else
             {
@@ -358,11 +626,11 @@ void Player::physics_update(SDL_Renderer *gRenderer, int frame, World *world, in
             }
         }
         // top right
-        if (top >= 0 && map[top][right] == 1)
+        if (top >= 0 && combined[top][right] == 1)
         {
             int overlap_y = abs((n_posy) - (h_unit * top + h_unit));
             int overlap_x = abs((n_posx + 40) - (w_unit * right));
-            if (overlap_y < overlap_x && (overlap_y != 0|| overlap_x !=0))
+            if (overlap_y < overlap_x && (overlap_y != 0 || overlap_x != 0))
             {
                 n_posy = top * h_unit + h_unit;
             }
@@ -372,21 +640,9 @@ void Player::physics_update(SDL_Renderer *gRenderer, int frame, World *world, in
             }
         }
     }
-
-    this->physics_posx = n_posx;
-    this->posx = static_cast<int>(physics_posx);
-
-    this->physics_posy = n_posy;
-    this->posy = static_cast<int>(physics_posy);
-
-    if (ground_collision)
-    {
-        (*world).add_ground_collision(posx, posy);
-    }
-    (*world).render_ground_collision(gRenderer, frame, getPosx(), getPosy());
 }
 
-void Player::physics_renderPlayer(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
+void Player::physics_renderPlayer(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, int offset)
 {
     // gSpriteSheetTexture.render( ( SCREEN_WIDTH - currentClip->w ) / 2, ( SCREEN_HEIGHT - currentClip->h ) / 2, currentClip );
     // idlePlayerSpriteSheetTexture.render(0, 0, gRenderer, currentClip);
@@ -396,7 +652,7 @@ void Player::physics_renderPlayer(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int
     // SDL_Rect *currentClip = &pooPlayerSpriteClips[0];
     // pooPlayerSpriteSheetTexture.setColor(color[0], color[1], color[2]);
     // pooPlayerSpriteSheetTexture.render(this->posx, this->posy, gRenderer, currentClip);
-    SDL_Rect player = {this->posx, this->posy, 40, 40};
+    SDL_Rect player = {this->posx - offset, this->posy, 40, 40};
     SDL_SetRenderDrawColor(gRenderer, 255, 0, 0, 255);
     SDL_RenderFillRect(gRenderer, &player);
 }
