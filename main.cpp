@@ -5,8 +5,9 @@
 #include <string>
 #include <sstream>
 #include "player.cpp"
-#include "ltimer.cpp"
+// #include "ltimer.cpp"
 #include "map.cpp"
+// #include "level.cpp"
 
 // vector<vector<int>> map = {{0, 0, 0, 0, 0, 0, 0, 0},
 // 						   {0, 0, 0, 0, 0, 0, 0, 0},
@@ -59,7 +60,6 @@
 // 									{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}};
 // // 12x11
 
-
 // Screen dimension constants
 const int SCREEN_WIDTH = 1216;
 const int SCREEN_HEIGHT = 519;
@@ -69,6 +69,7 @@ const int SCREEN_TICK_PER_FRAME = 1000 / SCREEN_FPS;
 extern vector<vector<int>> map;
 extern vector<vector<int>> level_select;
 extern vector<vector<int>> home;
+extern vector<vector<int>> one;
 
 // Starts up SDL and creates window
 bool init();
@@ -156,19 +157,32 @@ void close()
 	SDL_Quit();
 }
 
-void change_level(string level, vector<vector<int>> *current_map)
+void change_level(string *new_level, string *level, vector<vector<int>> *current_map, Player *player)
 {
-	if (level == "home")
+
+	if (*new_level == "home")
 	{
 		*current_map = home;
+		*level = *new_level;
 	}
-	else if (level == "level select")
+	else if (*new_level == "level select")
 	{
 		*current_map = level_select;
+		*level = *new_level;
 	}
-
-	// player.setPosx(100);
-	// player.setPosy(200);
+	else if (*new_level == "one")
+	{
+		*current_map = one;
+		*level = *new_level;
+	}
+	else
+	{
+		*current_map = home;
+		*level = "home";
+		*new_level = *level;
+	}
+	(*player).setPosx(100);
+	(*player).setPosy(200);
 }
 
 int main(int argc, char *args[])
@@ -181,9 +195,11 @@ int main(int argc, char *args[])
 	else
 	{
 		// World
-		string level = "home";
+		Level l = Level("one");
+		string level = "one";
+		string saved_level = level;
 		World world = World();
-		vector<vector<int>> current_map = home;
+		vector<vector<int>> current_map = one;
 
 		// Player
 		Player player = Player();
@@ -213,6 +229,10 @@ int main(int argc, char *args[])
 
 			// The frames per second timer
 			LTimer fpsTimer;
+
+			// The projectiles timer
+			LTimer shooterTimer;
+			shooterTimer.start();
 
 			// The frames per second cap timer
 			LTimer capTimer;
@@ -293,10 +313,8 @@ int main(int argc, char *args[])
 						}
 						if (e.key.keysym.sym == SDLK_r)
 						{
-							current_map = level_select;
-							level = "level select";
-							player.setPosx(100);
-							player.setPosy(200);
+							string l = "level_select";
+							change_level(&l, &level, &current_map, &player);
 						}
 					}
 					if (e.type == SDL_KEYUP)
@@ -322,6 +340,13 @@ int main(int argc, char *args[])
 					}
 				}
 
+				if (saved_level != level)
+				{
+					change_level(&level, &saved_level, &current_map, &player);
+				}
+
+
+
 				// Calculate and correct fps
 				float avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.f);
 				if (avgFPS > 2000000)
@@ -345,7 +370,7 @@ int main(int argc, char *args[])
 				world.update({player.getPosx() - offset, player.getPosy(), 40, 40});
 
 				// Render the world
-				world.render(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT, offset, current_map, map, level);
+				world.render(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT, offset, current_map, map, &level);
 
 				// // Update the player
 				player.update(gRenderer, frame, &world, SCREEN_HEIGHT, SCREEN_WIDTH, offset, current_map, map);
@@ -353,6 +378,11 @@ int main(int argc, char *args[])
 				// Render the player
 				player.render(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT, offset);
 
+				if(level == "one") {
+					l.update(frame, &shooterTimer);
+					l.render(gRenderer);
+					
+				}
 				// Update screen
 				SDL_RenderPresent(gRenderer);
 				++countedFrames;

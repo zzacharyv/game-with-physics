@@ -4,7 +4,7 @@
 #include <SDL2/SDL.h>
 #include <algorithm>
 #include "ltexture.cpp"
-#include "draw.cpp"
+#include "level.cpp"
 using namespace std;
 
 SDL_Rect ground_collision_sprite_clips[4];
@@ -65,12 +65,12 @@ public:
     }
 };
 
-class Level_Select
+struct LevelSelect
 {
-public:
-    int levels[7] = {1, 2, 5, 10, 20, 50, 100};
-    LTexture *level_icons[7] = {&one_dollar_small, &two_dollar_small, &five_dollar_small, &ten_dollar_small, &twenty_dollar_small, &fifty_dollar_small, &one_hundred_dollar_small};
-    Level_Select() {};
+    string title;
+    bool unlocked;
+    SDL_Rect area;
+    LTexture *icon;
 };
 
 class World
@@ -78,11 +78,18 @@ class World
 private:
     vector<Unit *> ground_collisions;
     SDL_Rect player;
+    LevelSelect levels[7] = {{"one", true, {}, &one_dollar_small},
+                             {"two", false, {}, &two_dollar_small},
+                             {"five", false, {}, &five_dollar_small},
+                             {"ten", false, {}, &ten_dollar_small},
+                             {"twenty", false, {}, &twenty_dollar_small},
+                             {"fifty", false, {}, &fifty_dollar_small},
+                             {"one hundred", false, {}, &one_hundred_dollar_small}};
 
 public:
     World();
     void update(SDL_Rect);
-    void render(SDL_Renderer *, int, int, int, vector<vector<int>>, vector<vector<int>>, string);
+    void render(SDL_Renderer *, int, int, int, vector<vector<int>>, vector<vector<int>>, string *);
     void render_ground_collision(SDL_Renderer *, int, int, int, int);
     bool loadMedia(SDL_Renderer *);
     void add_ground_collision(int, int);
@@ -94,7 +101,7 @@ World::World()
     ground_collisions = {};
 }
 
-void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, int offset, vector<vector<int>> current_map, vector<vector<int>> map, string level)
+void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, int offset, vector<vector<int>> current_map, vector<vector<int>> map, string *level)
 {
     // for(vector<int> r : *current_map) {
     //             for(int c : r) {
@@ -106,9 +113,8 @@ void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT,
     SDL_Rect bg = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
     one_dollar.render(0, 0, bg, gRenderer);
 
-   
-
     // tilemap
+    int y_offset=-10;
     int i = map[0][0];
     int w_unit = SCREEN_WIDTH / (map[0].size());
 
@@ -119,11 +125,11 @@ void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT,
         {
             if (current_map[row][col] == 1)
             {
-                SDL_Rect ground = {col * w_unit - offset + 2, row * h_unit, w_unit - 4, h_unit};
+                SDL_Rect ground = {col * w_unit - offset + 2, row * h_unit-y_offset, w_unit - 4, h_unit};
                 // SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
                 // SDL_RenderFillRect(gRenderer, &ground);
                 SDL_SetRenderDrawColor(gRenderer, 55, 54, 50, 255);
-                SDL_Rect border = {col * w_unit - offset, row * h_unit - 3, w_unit, h_unit + 3};
+                SDL_Rect border = {col * w_unit - offset, row * h_unit - 3-y_offset, w_unit, h_unit + 3};
                 SDL_RenderFillRect(gRenderer, &border);
 
                 block.render(0, 0, ground, gRenderer);
@@ -131,7 +137,8 @@ void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT,
         }
     }
 
-    if ( level == "home") {
+    if (*level == "home")
+    {
         // eyes
         SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
         double p = 15.0 / static_cast<double>(SCREEN_WIDTH);
@@ -140,37 +147,47 @@ void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT,
         SDL_RenderFillCircle(gRenderer, 606 + x, 237, 4);
         SDL_RenderFillCircle(gRenderer, 647 + x, 237, 4);
 
-        SDL_Rect choose_level = {836,234,120,120};
+        SDL_Rect play_button = {836, 234, 120, 120};
         SDL_SetRenderDrawColor(gRenderer, 13, 146, 81, 255);
 
-        SDL_RenderFillRect(gRenderer, &choose_level);
+        SDL_RenderFillRect(gRenderer, &play_button);
 
-
+        if (box_collision(play_button, player))
+        {
+            *level = "level select";
+        }
     }
-     else if (level == "level select")
+    else if (*level == "level select")
     {
-         // eyes
+        // eyes
         SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
         double p = 15.0 / static_cast<double>(SCREEN_WIDTH);
         double x = p * static_cast<double>(player.x);
 
         SDL_RenderFillCircle(gRenderer, 606 + x, 237, 4);
         SDL_RenderFillCircle(gRenderer, 647 + x, 237, 4);
-        
+
         for (int i = 0; i < 7; ++i)
         {
-            SDL_Rect one = {((i) * 304 + 150 * (1 + i)) - offset, SCREEN_HEIGHT / 3, 304, 130};
-            SDL_Rect one_outline = one;
-            one_outline.x -= 10;
-            one_outline.w += 20;
-            one_outline.y -= 10;
-            one_outline.h += 20;
-            SDL_SetRenderDrawColor(gRenderer, 13, 146, 81, 255);
+            levels[i].area = {((i) * 304 + 250 * (1 + i)) - offset, SCREEN_HEIGHT / 3, 304, 130};
 
-            SDL_RenderFillRect(gRenderer, &one_outline);
-            Level_Select l = Level_Select();
-            LTexture *poo = l.level_icons[0];
-            (*(l.level_icons[1])).render(0, 0, one, gRenderer);
+            SDL_Rect outline = levels[i].area;
+            outline.x -= 10;
+            outline.w += 20;
+            outline.y -= 10;
+            outline.h += 20;
+            SDL_SetRenderDrawColor(gRenderer, 13, 146, 81, 255);
+            if(!levels[i].unlocked) {
+                SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+            }
+
+            SDL_RenderFillRect(gRenderer, &outline);
+            (*levels[i].icon).render(0, 0, levels[i].area, gRenderer);
+
+            if (box_collision(levels[i].area, player) && levels[i].unlocked == true)
+            {
+                *level = levels[i].title;
+            }
         }
     }
 }
@@ -209,7 +226,32 @@ bool World::loadMedia(SDL_Renderer *gRenderer)
     }
     if (!two_dollar_small.loadFromFile("media/two dollar/front_small.jpg", gRenderer))
     {
-        printf("Failed to load two dollar front texture!\n");
+        printf("Failed to load two dollar front small texture!\n");
+        success = false;
+    }
+    if (!five_dollar_small.loadFromFile("media/five dollar/front_small.jpeg", gRenderer))
+    {
+        printf("Failed to load five dollar front small texture!\n");
+        success = false;
+    }
+    if (!ten_dollar_small.loadFromFile("media/ten dollar/front_small.jpeg", gRenderer))
+    {
+        printf("Failed to load ten dollar front small texture!\n");
+        success = false;
+    }
+    if (!twenty_dollar_small.loadFromFile("media/twenty dollar/front_small.jpeg", gRenderer))
+    {
+        printf("Failed to load twenty dollar front small texture!\n");
+        success = false;
+    }
+    if (!fifty_dollar_small.loadFromFile("media/fifty dollar/front_small.jpeg", gRenderer))
+    {
+        printf("Failed to load fifty dollar front small texture!\n");
+        success = false;
+    }
+    if (!one_hundred_dollar_small.loadFromFile("media/one hundred dollar/front_small.jpeg", gRenderer))
+    {
+        printf("Failed to load one hundred dollar front small texture!\n");
         success = false;
     }
     if (!block.loadFromFile("media/level/block_1.jpeg", gRenderer))
@@ -285,4 +327,28 @@ bool World::box_collision(SDL_Rect rect1, SDL_Rect rect2)
     {
         return false;
     }
+}
+
+bool circle_box_collision(float cx, float cy, float radius, SDL_Rect rect) {
+
+  // temporary variables to set edges for testing
+  float testX = cx;
+  float testY = cy;
+
+  // which edge is closest?
+  if (cx < rect.x)         testX = rect.x;      // test left edge
+  else if (cx > rect.x+rect.w) testX = rect.x+rect.w;   // right edge
+  if (cy < rect.y)         testY = rect.y;      // top edge
+  else if (cy > rect.y+rect.h) testY = rect.y+rect.h;   // bottom edge
+
+  // get distance from closest edges
+  float distX = cx-testX;
+  float distY = cy-testY;
+  float distance = sqrt( (distX*distX) + (distY*distY) );
+
+  // if the distance is less than the radius, collision!
+  if (distance <= radius) {
+    return true;
+  }
+  return false;
 }
