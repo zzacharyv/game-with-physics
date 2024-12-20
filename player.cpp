@@ -14,9 +14,9 @@ private:
     double physics_posy;
     double x_velocity;
     double y_velocity;
-public:
     double gravity = 3.0;
-    int color[3];
+
+public:
     int getPosx();
     int getPosy();
     double getVelocityX();
@@ -26,7 +26,7 @@ public:
     void setVelocityX(double);
     void setVelocityY(double);
     Player();
-    void update(SDL_Renderer *, int, World *, int, int, int);
+    void update(SDL_Renderer *, int, World *, int, int, int,vector<vector<int>>,vector<vector<int>>);
     void updateVelocityX(double);
     void render(SDL_Renderer *gRenderer, int, int, int);
 
@@ -59,6 +59,7 @@ void Player::setPosx(int posx)
 void Player::setPosy(int posy)
 {
     this->posy = posy;
+    physics_posy = posy;
 }
 
 void Player::setVelocityX(double x) {
@@ -71,26 +72,23 @@ void Player::setVelocityY(double y) {
 
 Player::Player()
 {
-    posx = 250;
-    posy = 0;
-    physics_posx = 250;
-    physics_posy = 0;
+    posx = 100;
+    posy = 200;
+    physics_posx = 100;
+    physics_posy = 200;
     x_velocity = 0.0;
     y_velocity = 0.0;
-    color[0] = 0;
-    color[1] = 255;
-    color[2] = 255;
 }
 
-void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN_HEIGHT, int SCREEN_WIDTH, int offset)
+void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN_HEIGHT, int SCREEN_WIDTH, int offset, vector<vector<int>> current_map, vector<vector<int>> map)
 {
 
     bool ground_collision = false;
 
-    int w_unit = SCREEN_WIDTH / (sizeof(map[0]) / sizeof(int));
-    int h_unit = SCREEN_HEIGHT / (sizeof(map) / sizeof(map[0]));
-    int width = (sizeof(full_map[0]) / sizeof(int));
-    int height = ((sizeof(map)) / sizeof(map[0]));
+    int w_unit = SCREEN_WIDTH / (map[0].size());
+    int h_unit = SCREEN_HEIGHT / map.size();
+    int width = current_map[0].size();
+    int height = current_map.size();
 
     double n_posx = physics_posx + x_velocity;
     double n_posy = physics_posy;
@@ -107,7 +105,7 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     // left upper tile
     if (x - 1 >= 0 && x - 1 < width && y - 1 < height && y - 1 >= 0)
     {
-        if (full_map[y - 1][x - 1] == 1)
+        if (current_map[y - 1][x - 1] == 1)
         {
             if (n_posy < (y)*h_unit)
             {
@@ -122,7 +120,7 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     // left center tile
     if (x - 1 >= 0 && x - 1 < width && y < height && y >= 0)
     {
-        if (full_map[y][x - 1] == 1)
+        if (current_map[y][x - 1] == 1)
         {
             if (n_posx < (x)*w_unit)
             {
@@ -134,7 +132,7 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     // left lower tile
     if (x - 1 >= 0 && x - 1 < width && y + 1 < height && y + 1 >= 0)
     {
-        if (full_map[y + 1][x - 1] == 1)
+        if (current_map[y + 1][x - 1] == 1)
         {
             if (n_posy + 40 > (y + 1) * h_unit)
             {
@@ -149,7 +147,7 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     // right upper tile
     if (x + 1 >= 0 && x + 1 < width && y - 1 < height && y - 1 >= 0)
     {
-        if (full_map[y - 1][x + 1] == 1)
+        if (current_map[y - 1][x + 1] == 1)
         {
             if (n_posy < (y)*h_unit)
             {
@@ -164,7 +162,7 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     // right center tile
     if (x + 1 >= 0 && x + 1 < width && y < height && y >= 0)
     {
-        if (full_map[y][x + 1] == 1)
+        if (current_map[y][x + 1] == 1)
         {
             if (n_posx + 40 > (x + 1) * w_unit)
             {
@@ -176,7 +174,7 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     // right lower tile
     if (x + 1 >= 0 && x + 1 < width && y + 1 < height && y + 1 >= 0)
     {
-        if (full_map[y + 1][x + 1] == 1)
+        if (current_map[y + 1][x + 1] == 1)
         {
             if (n_posy + 40 > (y + 1) * h_unit)
             {
@@ -195,7 +193,7 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     // upper left tile
     if (x - 1 >= 0 && x - 1 < width && y - 1 < height && y - 1 >= 0)
     {
-        if (full_map[y - 1][x - 1] == 1)
+        if (current_map[y - 1][x - 1] == 1)
         {
             if (n_posx < (x)*w_unit)
             {
@@ -210,7 +208,7 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     // upper center tile
     if (x >= 0 && x < width && y - 1 < height && y - 1 >= 0)
     {
-        if (full_map[y - 1][x] == 1)
+        if (current_map[y - 1][x] == 1)
         {
             if (n_posy < (y)*h_unit)
             {
@@ -222,7 +220,7 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     // upper right tile
     if (x + 1 >= 0 && x + 1 < width && y - 1 < height && y - 1 >= 0)
     {
-        if (full_map[y - 1][x + 1] == 1)
+        if (current_map[y - 1][x + 1] == 1)
         {
             if (n_posx + 40 > (x + 1) * w_unit)
             {
@@ -237,7 +235,7 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     // bottom left tile
     if (x - 1 >= 0 && x - 1 < width && y + 1 < height && y + 1 >= 0)
     {
-        if (full_map[y + 1][x - 1] == 1)
+        if (current_map[y + 1][x - 1] == 1)
         {
             if (n_posx < (x)*w_unit)
             {
@@ -253,7 +251,7 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     // bottom center tile
     if (x >= 0 && x < width && y + 1 < height && y + 1 >= 0)
     {
-        if (full_map[y + 1][x] == 1)
+        if (current_map[y + 1][x] == 1)
         {
             if (n_posy + 40 > (y + 1) * h_unit)
             {
@@ -266,7 +264,7 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     // bottom right tile
     if (x + 1 >= 0 && x + 1 < width && y + 1 < height && y + 1 >= 0)
     {
-        if (full_map[y + 1][x + 1] == 1)
+        if (current_map[y + 1][x + 1] == 1)
         {
             if (n_posx + 40 > (x + 1) * w_unit)
             {
@@ -284,10 +282,10 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     {
         n_posx = 0;
     }
-    int bounds = ((sizeof(full_map[0])-sizeof(map[0]))/sizeof(int)) * SCREEN_WIDTH/(sizeof(map[0])/sizeof(int)); 
-    if (n_posx + 40 > SCREEN_WIDTH + bounds)
+    int bounds = current_map[0].size() * w_unit; 
+    if (n_posx + 40 > bounds)
     {
-        n_posx = SCREEN_WIDTH + bounds - 40;
+        n_posx = bounds - 40;
     }
     if (n_posy < 0)
     {
@@ -316,6 +314,6 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
 void Player::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, int offset)
 {
     SDL_Rect player = {this->posx - offset, this->posy, 40, 40};
-    SDL_SetRenderDrawColor(gRenderer, 255, 0, 0, 255);
+    SDL_SetRenderDrawColor(gRenderer, 247, 62, 152, 255);
     SDL_RenderFillRect(gRenderer, &player);
 }

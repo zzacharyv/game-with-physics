@@ -6,12 +6,69 @@
 #include <sstream>
 #include "player.cpp"
 #include "ltimer.cpp"
+#include "map.cpp"
+
+// vector<vector<int>> map = {{0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {1, 1, 1, 1, 1, 1, 1, 1},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {0, 0, 0, 0, 0, 0, 0, 0},
+// 						   {1, 1, 1, 1, 1, 1, 1, 1}};
+// // 24x23
+// vector<vector<int>> level_select = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// 									{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}};
+// // 12x11
+
 
 // Screen dimension constants
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 360;
+const int SCREEN_WIDTH = 1216;
+const int SCREEN_HEIGHT = 519;
 const int SCREEN_FPS = 84;
 const int SCREEN_TICK_PER_FRAME = 1000 / SCREEN_FPS;
+
+extern vector<vector<int>> map;
+extern vector<vector<int>> level_select;
+extern vector<vector<int>> home;
 
 // Starts up SDL and creates window
 bool init();
@@ -99,6 +156,21 @@ void close()
 	SDL_Quit();
 }
 
+void change_level(string level, vector<vector<int>> *current_map)
+{
+	if (level == "home")
+	{
+		*current_map = home;
+	}
+	else if (level == "level select")
+	{
+		*current_map = level_select;
+	}
+
+	// player.setPosx(100);
+	// player.setPosy(200);
+}
+
 int main(int argc, char *args[])
 {
 	// Start up SDL and create window
@@ -108,9 +180,10 @@ int main(int argc, char *args[])
 	}
 	else
 	{
-		// Grid
-		int level = 2;
+		// World
+		string level = "home";
 		World world = World();
+		vector<vector<int>> current_map = home;
 
 		// Player
 		Player player = Player();
@@ -169,6 +242,11 @@ int main(int argc, char *args[])
 					{
 						quit = true;
 					}
+					// if (e.type = SDL_MOUSEBUTTONDOWN) {
+					// 	int x, y;
+					// 	SDL_GetMouseState(&x, &y);
+					// 	cout << x << " " << y << endl;
+					// }
 					if (e.type == SDL_KEYDOWN)
 					{
 						if (e.key.keysym.sym == SDLK_RIGHT)
@@ -177,7 +255,7 @@ int main(int argc, char *args[])
 							{
 								player.setVelocityX(1);
 							}
-							player.setVelocityX(player.getVelocityX()+0.4);
+							player.setVelocityX(player.getVelocityX() + 0.4);
 						}
 						if (e.key.keysym.sym == SDLK_LEFT)
 						{
@@ -185,7 +263,7 @@ int main(int argc, char *args[])
 							{
 								player.setVelocityX(-1);
 							}
-							player.setVelocityX(player.getVelocityX()-0.4);
+							player.setVelocityX(player.getVelocityX() - 0.4);
 						}
 						if (e.key.keysym.sym == SDLK_UP)
 						{
@@ -201,10 +279,10 @@ int main(int argc, char *args[])
 								}
 							}
 						}
-						else
-						{
-							player.setVelocityY(0);
-						}
+						// else
+						// {
+						// 	player.setVelocityY(0);
+						// }
 						if (e.key.keysym.sym == SDLK_DOWN)
 						{
 							if (player.getVelocityY() == 0.0)
@@ -212,7 +290,13 @@ int main(int argc, char *args[])
 								player.setVelocityY(1);
 							}
 							player.setVelocityY(player.getVelocityY() + .04);
-
+						}
+						if (e.key.keysym.sym == SDLK_r)
+						{
+							current_map = level_select;
+							level = "level select";
+							player.setPosx(100);
+							player.setPosy(200);
 						}
 					}
 					if (e.type == SDL_KEYUP)
@@ -237,7 +321,6 @@ int main(int argc, char *args[])
 						}
 					}
 				}
-				cout << player.getVelocityX() << endl;
 
 				// Calculate and correct fps
 				float avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.f);
@@ -245,20 +328,27 @@ int main(int argc, char *args[])
 				{
 					avgFPS = 0;
 				}
-				
+
 				// Clear screen
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(gRenderer);
-		
-				int offset = player.getPosx()-50;
-				if(offset < 0) offset = 0;
-				if(offset > 200) offset = 200;
-	
+
+				int offset = player.getPosx() - 400;
+				if (offset < 0)
+					offset = 0;
+				int w_unit = (SCREEN_WIDTH / (map[0].size()));
+				int off = w_unit * (current_map[0].size() - map[0].size());
+
+				if (offset > off)
+					offset = off;
+
+				world.update({player.getPosx() - offset, player.getPosy(), 40, 40});
+
 				// Render the world
-				world.render(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT, offset);
+				world.render(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT, offset, current_map, map, level);
 
 				// // Update the player
-				player.update(gRenderer, frame, &world, SCREEN_HEIGHT, SCREEN_WIDTH, offset);
+				player.update(gRenderer, frame, &world, SCREEN_HEIGHT, SCREEN_WIDTH, offset, current_map, map);
 
 				// Render the player
 				player.render(gRenderer, SCREEN_WIDTH, SCREEN_HEIGHT, offset);

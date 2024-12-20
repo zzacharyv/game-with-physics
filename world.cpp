@@ -4,11 +4,22 @@
 #include <SDL2/SDL.h>
 #include <algorithm>
 #include "ltexture.cpp"
-#include "map.cpp"
+#include "draw.cpp"
 using namespace std;
 
 SDL_Rect ground_collision_sprite_clips[4];
 LTexture ground_collision_sprite_sheet;
+
+LTexture one_dollar;
+LTexture one_dollar_small;
+LTexture two_dollar_small;
+LTexture five_dollar_small;
+LTexture ten_dollar_small;
+LTexture twenty_dollar_small;
+LTexture fifty_dollar_small;
+LTexture one_hundred_dollar_small;
+
+LTexture block;
 
 class Unit
 {
@@ -54,17 +65,28 @@ public:
     }
 };
 
+class Level_Select
+{
+public:
+    int levels[7] = {1, 2, 5, 10, 20, 50, 100};
+    LTexture *level_icons[7] = {&one_dollar_small, &two_dollar_small, &five_dollar_small, &ten_dollar_small, &twenty_dollar_small, &fifty_dollar_small, &one_hundred_dollar_small};
+    Level_Select() {};
+};
+
 class World
 {
 private:
     vector<Unit *> ground_collisions;
+    SDL_Rect player;
 
 public:
     World();
-    void render(SDL_Renderer *, int, int, int);
+    void update(SDL_Rect);
+    void render(SDL_Renderer *, int, int, int, vector<vector<int>>, vector<vector<int>>, string);
     void render_ground_collision(SDL_Renderer *, int, int, int, int);
     bool loadMedia(SDL_Renderer *);
     void add_ground_collision(int, int);
+    bool box_collision(SDL_Rect, SDL_Rect);
 };
 
 World::World()
@@ -72,24 +94,83 @@ World::World()
     ground_collisions = {};
 }
 
-void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, int offset)
+void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, int offset, vector<vector<int>> current_map, vector<vector<int>> map, string level)
 {
+    // for(vector<int> r : *current_map) {
+    //             for(int c : r) {
+    //                 cout << c << " ";
+    //             }
+    //             cout << endl;
+    //         }
+    // background
     SDL_Rect bg = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+    one_dollar.render(0, 0, bg, gRenderer);
+
+   
+
+    // tilemap
     int i = map[0][0];
-    int w_unit = SCREEN_WIDTH / (sizeof(map[0]) / sizeof(int));
-    int h_unit = SCREEN_HEIGHT / (sizeof(map) / sizeof(map[0]));
-    for (int col = 0; col < sizeof(full_map[0]) / sizeof(int); ++col)
+    int w_unit = SCREEN_WIDTH / (map[0].size());
+
+    int h_unit = SCREEN_HEIGHT / (map.size());
+    for (int col = 0; col < current_map[0].size(); ++col)
     {
-        for (int row = 0; row < sizeof(full_map) / sizeof(full_map[0]); ++row)
+        for (int row = 0; row < current_map.size(); ++row)
         {
-            if (full_map[row][col] == 1)
+            if (current_map[row][col] == 1)
             {
-                SDL_Rect ground = {col * w_unit - offset, row * h_unit, w_unit, h_unit};
-                SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
-                SDL_RenderFillRect(gRenderer, &ground);
-                SDL_SetRenderDrawColor(gRenderer, 0, 255, 0, 255);
-                SDL_RenderDrawRect(gRenderer, &ground);
+                SDL_Rect ground = {col * w_unit - offset + 2, row * h_unit, w_unit - 4, h_unit};
+                // SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+                // SDL_RenderFillRect(gRenderer, &ground);
+                SDL_SetRenderDrawColor(gRenderer, 55, 54, 50, 255);
+                SDL_Rect border = {col * w_unit - offset, row * h_unit - 3, w_unit, h_unit + 3};
+                SDL_RenderFillRect(gRenderer, &border);
+
+                block.render(0, 0, ground, gRenderer);
             }
+        }
+    }
+
+    if ( level == "home") {
+        // eyes
+        SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+        double p = 15.0 / static_cast<double>(SCREEN_WIDTH);
+        double x = p * static_cast<double>(player.x);
+
+        SDL_RenderFillCircle(gRenderer, 606 + x, 237, 4);
+        SDL_RenderFillCircle(gRenderer, 647 + x, 237, 4);
+
+        SDL_Rect choose_level = {836,234,120,120};
+        SDL_SetRenderDrawColor(gRenderer, 13, 146, 81, 255);
+
+        SDL_RenderFillRect(gRenderer, &choose_level);
+
+
+    }
+     else if (level == "level select")
+    {
+         // eyes
+        SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+        double p = 15.0 / static_cast<double>(SCREEN_WIDTH);
+        double x = p * static_cast<double>(player.x);
+
+        SDL_RenderFillCircle(gRenderer, 606 + x, 237, 4);
+        SDL_RenderFillCircle(gRenderer, 647 + x, 237, 4);
+        
+        for (int i = 0; i < 7; ++i)
+        {
+            SDL_Rect one = {((i) * 304 + 150 * (1 + i)) - offset, SCREEN_HEIGHT / 3, 304, 130};
+            SDL_Rect one_outline = one;
+            one_outline.x -= 10;
+            one_outline.w += 20;
+            one_outline.y -= 10;
+            one_outline.h += 20;
+            SDL_SetRenderDrawColor(gRenderer, 13, 146, 81, 255);
+
+            SDL_RenderFillRect(gRenderer, &one_outline);
+            Level_Select l = Level_Select();
+            LTexture *poo = l.level_icons[0];
+            (*(l.level_icons[1])).render(0, 0, one, gRenderer);
         }
     }
 }
@@ -115,6 +196,26 @@ bool World::loadMedia(SDL_Renderer *gRenderer)
             ground_collision_sprite_clips[i].w = 40;
             ground_collision_sprite_clips[i].h = 40;
         }
+    }
+    if (!one_dollar.loadFromFile("media/one dollar/front.jpeg", gRenderer))
+    {
+        printf("Failed to load dollar front texture!\n");
+        success = false;
+    }
+    if (!one_dollar_small.loadFromFile("media/one dollar/front_small.jpeg", gRenderer))
+    {
+        printf("Failed to load dollar front small texture!\n");
+        success = false;
+    }
+    if (!two_dollar_small.loadFromFile("media/two dollar/front_small.jpg", gRenderer))
+    {
+        printf("Failed to load two dollar front texture!\n");
+        success = false;
+    }
+    if (!block.loadFromFile("media/level/block_1.jpeg", gRenderer))
+    {
+        printf("Failed to load block texture!\n");
+        success = false;
     }
 
     return success;
@@ -162,5 +263,26 @@ void World::render_ground_collision(SDL_Renderer *gRenderer, int frame, int xpos
                 ground_collisions.erase(nth);
             }
         }
+    }
+}
+
+void World::update(SDL_Rect player)
+{
+    this->player = player;
+}
+
+bool World::box_collision(SDL_Rect rect1, SDL_Rect rect2)
+{
+    if (
+        rect1.x < rect2.x + rect2.w &&
+        rect1.x + rect1.w > rect2.x &&
+        rect1.y < rect2.y + rect2.h &&
+        rect1.y + rect1.h > rect2.y)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
