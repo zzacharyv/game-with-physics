@@ -1,107 +1,12 @@
-#include <iostream>
-#include <vector>
-#include <set>
-#include <SDL2/SDL.h>
-#include <algorithm>
-#include "ltexture.cpp"
-#include "level.cpp"
-using namespace std;
+#include "world.h"
 
-SDL_Rect ground_collision_sprite_clips[4];
-LTexture ground_collision_sprite_sheet;
-
-LTexture one_dollar;
-LTexture one_dollar_small;
-LTexture two_dollar_small;
-LTexture five_dollar_small;
-LTexture ten_dollar_small;
-LTexture twenty_dollar_small;
-LTexture fifty_dollar_small;
-LTexture one_hundred_dollar_small;
-
-LTexture block;
-
-class Unit
-{
-    int x;
-    int y;
-    int frame;
-
-public:
-    Unit(int x, int y, int frame)
-    {
-        this->x = x;
-        this->y = y;
-        this->frame = frame;
-    }
-    bool operator==(const Unit &right) const
-    {
-        return (x == right.x) && (y == right.y);
-    }
-    bool operator>(const Unit &right) const
-    {
-        return false;
-    }
-    bool operator<(const Unit &right) const
-    {
-
-        return true;
-    }
-    int getX() const
-    {
-        return x;
-    }
-    int getY() const
-    {
-        return y;
-    }
-    int getFrame() const
-    {
-        return frame;
-    }
-    void setFrame(int frame)
-    {
-        this->frame = frame;
-    }
-};
-
-struct LevelSelect
-{
-    string title;
-    bool unlocked;
-    SDL_Rect area;
-    LTexture *icon;
-};
-
-class World
-{
-private:
-    vector<Unit *> ground_collisions;
-    SDL_Rect player;
-    LevelSelect levels[7] = {{"one", true, {}, &one_dollar_small},
-                             {"two", false, {}, &two_dollar_small},
-                             {"five", false, {}, &five_dollar_small},
-                             {"ten", false, {}, &ten_dollar_small},
-                             {"twenty", false, {}, &twenty_dollar_small},
-                             {"fifty", false, {}, &fifty_dollar_small},
-                             {"one hundred", false, {}, &one_hundred_dollar_small}};
-
-public:
-    World();
-    void update(SDL_Rect);
-    void render(SDL_Renderer *, int, int, int, vector<vector<int>>, vector<vector<int>>, string *);
-    void render_ground_collision(SDL_Renderer *, int, int, int, int);
-    bool loadMedia(SDL_Renderer *);
-    void add_ground_collision(int, int);
-    bool box_collision(SDL_Rect, SDL_Rect);
-};
 
 World::World()
 {
     ground_collisions = {};
 }
 
-void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, int offset, vector<vector<int>> current_map, vector<vector<int>> map, string *level)
+void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, int offset, std::vector<std::vector<int>> current_map, std::vector<std::vector<int>> map, std::string *level)
 {
     // for(vector<int> r : *current_map) {
     //             for(int c : r) {
@@ -114,7 +19,7 @@ void World::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT,
     one_dollar.render(0, 0, bg, gRenderer);
 
     // tilemap
-    int y_offset=-10;
+    int y_offset=0;
     int i = map[0][0];
     int w_unit = SCREEN_WIDTH / (map[0].size());
 
@@ -300,7 +205,7 @@ void World::render_ground_collision(SDL_Renderer *gRenderer, int frame, int xpos
         {
             if (frame == 15)
             {
-                vector<Unit *>::iterator nth = ground_collisions.begin() + j;
+                std::vector<Unit *>::iterator nth = ground_collisions.begin() + j;
                 delete ground_collisions[j];
                 ground_collisions.erase(nth);
             }
@@ -311,44 +216,4 @@ void World::render_ground_collision(SDL_Renderer *gRenderer, int frame, int xpos
 void World::update(SDL_Rect player)
 {
     this->player = player;
-}
-
-bool World::box_collision(SDL_Rect rect1, SDL_Rect rect2)
-{
-    if (
-        rect1.x < rect2.x + rect2.w &&
-        rect1.x + rect1.w > rect2.x &&
-        rect1.y < rect2.y + rect2.h &&
-        rect1.y + rect1.h > rect2.y)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool circle_box_collision(float cx, float cy, float radius, SDL_Rect rect) {
-
-  // temporary variables to set edges for testing
-  float testX = cx;
-  float testY = cy;
-
-  // which edge is closest?
-  if (cx < rect.x)         testX = rect.x;      // test left edge
-  else if (cx > rect.x+rect.w) testX = rect.x+rect.w;   // right edge
-  if (cy < rect.y)         testY = rect.y;      // top edge
-  else if (cy > rect.y+rect.h) testY = rect.y+rect.h;   // bottom edge
-
-  // get distance from closest edges
-  float distX = cx-testX;
-  float distY = cy-testY;
-  float distance = sqrt( (distX*distX) + (distY*distY) );
-
-  // if the distance is less than the radius, collision!
-  if (distance <= radius) {
-    return true;
-  }
-  return false;
 }

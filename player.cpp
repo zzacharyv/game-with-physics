@@ -1,36 +1,4 @@
-#include <SDL2/SDL.h>
-#include <array>
-#include <iostream>
-#include <stdexcept>
-#include "world.cpp"
-using namespace std;
-
-class Player
-{
-private:
-    int posx;
-    int posy;
-    double physics_posx;
-    double physics_posy;
-    double x_velocity;
-    double y_velocity;
-    double gravity = 3.0;
-
-public:
-    int getPosx();
-    int getPosy();
-    double getVelocityX();
-    double getVelocityY();
-    void setPosx(int);
-    void setPosy(int);
-    void setVelocityX(double);
-    void setVelocityY(double);
-    Player();
-    void update(SDL_Renderer *, int, World *, int, int, int,vector<vector<int>>,vector<vector<int>>);
-    void updateVelocityX(double);
-    void render(SDL_Renderer *gRenderer, int, int, int);
-
-};
+#include "player.h"
 
 int Player::getPosx()
 {
@@ -42,11 +10,13 @@ int Player::getPosy()
     return posy;
 }
 
-double Player::getVelocityX() {
+double Player::getVelocityX()
+{
     return x_velocity;
 }
 
-double Player::getVelocityY() {
+double Player::getVelocityY()
+{
     return y_velocity;
 }
 
@@ -62,11 +32,13 @@ void Player::setPosy(int posy)
     physics_posy = posy;
 }
 
-void Player::setVelocityX(double x) {
+void Player::setVelocityX(double x)
+{
     x_velocity = x;
 }
 
-void Player::setVelocityY(double y) {
+void Player::setVelocityY(double y)
+{
     y_velocity = y;
 }
 
@@ -80,9 +52,45 @@ Player::Player()
     y_velocity = 0.0;
 }
 
-void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN_HEIGHT, int SCREEN_WIDTH, int offset, vector<vector<int>> current_map, vector<vector<int>> map)
+void Player::ground_collision()
+{
+    on_ground = true;
+    y_velocity = 0;
+}
+
+bool Player::isOnGround()
+{
+    return on_ground;
+}
+
+void Player::in_air()
+{
+    on_ground = false;
+}
+
+void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN_HEIGHT, int SCREEN_WIDTH, int offset, std::vector<std::vector<int>> current_map, std::vector<std::vector<int>> map, bool *descending)
 {
 
+    // if(isOnGround() && getVelocityY() == 0) {
+    // 					*descending = false;
+    // 				}
+    //                 if(getVelocityY() > 0) {
+    //                     setVelocityY(0);
+    //                     physics_posy -= getVelocityY();
+    //                     // SDL_FlushEvent(Uint32 type);
+    //                 }
+    //                 if(*descending == true) {
+    // 					setVelocityY(getVelocityY()+2);
+    // 					// std::cout <<"descent" << std::endl;
+    // 				}
+    // COLLISION v v v v v
+    // if(getPosy() < pre_jump_pos - 100) {
+    //     falling = true;
+    //     setVelocityY(0);
+    // }
+    // if(isOnGround()) {
+    //     falling = false;
+    // }
     bool ground_collision = false;
 
     int w_unit = SCREEN_WIDTH / (map[0].size());
@@ -90,18 +98,126 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     int width = current_map[0].size();
     int height = current_map.size();
 
-    double n_posx = physics_posx + x_velocity;
+    double n_posx = physics_posx;
     double n_posy = physics_posy;
+    double delta = 0;
+    if (!isOnGround())
+    {
+        setVelocityY(getVelocityY() + gravity);
+        // delta = physics_posy + y_velocity;
+    }
+    double step_speed = y_velocity / 3;
+    for (int i = 1; i <= 3; ++i)
+    {
+        n_posy += step_speed;
+        int left = n_posx / w_unit;
+        int right = (n_posx + 40) / w_unit;
+        int top = n_posy / h_unit;
+        int bottom = (n_posy + 40) / h_unit;
 
-    int left = n_posx / w_unit;
-    int right = (n_posx + 40) / w_unit;
-    int top = n_posy / h_unit;
-    int bottom = (n_posy + 40) / h_unit;
+        int x = (n_posx + (40 / 2)) / w_unit;
+        int y = (n_posy + (40 / 2)) / h_unit;
 
-    int x = (n_posx + (40 / 2)) / w_unit;
-    int y = (n_posy + (40 / 2)) / h_unit;
+        // vertical collision ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        // upper left tile
+        if (x - 1 >= 0 && x - 1 < width && y - 1 < height && y - 1 >= 0)
+        {
+            if (current_map[y - 1][x - 1] == 1)
+            {
+                if (n_posx < (x)*w_unit)
+                {
+                    if (n_posy < (y)*h_unit)
+                    {
+                        n_posy = (y)*h_unit;
+                    }
+                }
+            }
+        }
+
+        // upper center tile
+        if (x >= 0 && x < width && y - 1 < height && y - 1 >= 0)
+        {
+            if (current_map[y - 1][x] == 1)
+            {
+                if (n_posy < (y)*h_unit)
+                {
+                    n_posy = (y)*h_unit;
+                }
+            }
+        }
+
+        // upper right tile
+        if (x + 1 >= 0 && x + 1 < width && y - 1 < height && y - 1 >= 0)
+        {
+            if (current_map[y - 1][x + 1] == 1)
+            {
+                if (n_posx + 40 > (x + 1) * w_unit)
+                {
+                    if (n_posy < (y)*h_unit)
+                    {
+                        n_posy = (y)*h_unit;
+                    }
+                }
+            }
+        }
+
+        // bottom left tile
+        if (x - 1 >= 0 && x - 1 < width && y + 1 < height && y + 1 >= 0)
+        {
+            if (current_map[y + 1][x - 1] == 1)
+            {
+                if (n_posx < (x)*w_unit)
+                {
+                    if (n_posy + 40 > (y + 1) * h_unit)
+                    {
+                        n_posy = (y + 1) * h_unit - 40;
+                        ground_collision = true;
+                    }
+                }
+            }
+        }
+
+        // bottom center tile
+        if (x >= 0 && x < width && y + 1 < height && y + 1 >= 0)
+        {
+            if (current_map[y + 1][x] == 1)
+            {
+                if (n_posy + 40 > (y + 1) * h_unit)
+                {
+                    n_posy = (y + 1) * h_unit - 40;
+                    ground_collision = true;
+                }
+            }
+        }
+
+        // bottom right tile
+        if (x + 1 >= 0 && x + 1 < width && y + 1 < height && y + 1 >= 0)
+        {
+            if (current_map[y + 1][x + 1] == 1)
+            {
+                if (n_posx + 40 > (x + 1) * w_unit)
+                {
+                    if (n_posy + 40 > (y + 1) * h_unit)
+                    {
+                        n_posy = (y + 1) * h_unit - 40;
+                        ground_collision = true;
+                    }
+                }
+            }
+        }
+    }
 
     // horizontal collision ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     int left = n_posx / w_unit;
+        int right = (n_posx + 40) / w_unit;
+        int top = n_posy / h_unit;
+        int bottom = (n_posy + 40) / h_unit;
+
+        int x = (n_posx + (40 / 2)) / w_unit;
+        int y = (n_posy + (40 / 2)) / h_unit;
+
+n_posx += x_velocity;
     // left upper tile
     if (x - 1 >= 0 && x - 1 < width && y - 1 < height && y - 1 >= 0)
     {
@@ -186,103 +302,12 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
         }
     }
 
-    // vertical collision ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    n_posy = physics_posy + y_velocity + gravity;
-    x = (n_posx + (40 / 2)) / w_unit;
-
-    // upper left tile
-    if (x - 1 >= 0 && x - 1 < width && y - 1 < height && y - 1 >= 0)
-    {
-        if (current_map[y - 1][x - 1] == 1)
-        {
-            if (n_posx < (x)*w_unit)
-            {
-                if (n_posy < (y)*h_unit)
-                {
-                    n_posy = (y)*h_unit;
-                }
-            }
-        }
-    }
-
-    // upper center tile
-    if (x >= 0 && x < width && y - 1 < height && y - 1 >= 0)
-    {
-        if (current_map[y - 1][x] == 1)
-        {
-            if (n_posy < (y)*h_unit)
-            {
-                n_posy = (y)*h_unit;
-            }
-        }
-    }
-
-    // upper right tile
-    if (x + 1 >= 0 && x + 1 < width && y - 1 < height && y - 1 >= 0)
-    {
-        if (current_map[y - 1][x + 1] == 1)
-        {
-            if (n_posx + 40 > (x + 1) * w_unit)
-            {
-                if (n_posy < (y)*h_unit)
-                {
-                    n_posy = (y)*h_unit;
-                }
-            }
-        }
-    }
-
-    // bottom left tile
-    if (x - 1 >= 0 && x - 1 < width && y + 1 < height && y + 1 >= 0)
-    {
-        if (current_map[y + 1][x - 1] == 1)
-        {
-            if (n_posx < (x)*w_unit)
-            {
-                if (n_posy + 40 > (y + 1) * h_unit)
-                {
-                    n_posy = (y + 1) * h_unit - 40;
-                    ground_collision = true;
-                }
-            }
-        }
-    }
-
-    // bottom center tile
-    if (x >= 0 && x < width && y + 1 < height && y + 1 >= 0)
-    {
-        if (current_map[y + 1][x] == 1)
-        {
-            if (n_posy + 40 > (y + 1) * h_unit)
-            {
-                n_posy = (y + 1) * h_unit - 40;
-                ground_collision = true;
-            }
-        }
-    }
-
-    // bottom right tile
-    if (x + 1 >= 0 && x + 1 < width && y + 1 < height && y + 1 >= 0)
-    {
-        if (current_map[y + 1][x + 1] == 1)
-        {
-            if (n_posx + 40 > (x + 1) * w_unit)
-            {
-                if (n_posy + 40 > (y + 1) * h_unit)
-                {
-                    n_posy = (y + 1) * h_unit - 40;
-                    ground_collision = true;
-                }
-            }
-        }
-    }
-
     // window permimeter
     if (n_posx < 0)
     {
         n_posx = 0;
     }
-    int bounds = current_map[0].size() * w_unit; 
+    int bounds = current_map[0].size() * w_unit;
     if (n_posx + 40 > bounds)
     {
         n_posx = bounds - 40;
@@ -306,9 +331,21 @@ void Player::update(SDL_Renderer *gRenderer, int frame, World *world, int SCREEN
     // ground collision
     if (ground_collision)
     {
-        (*world).add_ground_collision(posx, posy);
+        this->ground_collision();
+        // (*world).add_ground_collision(posx, posy);
     }
-    (*world).render_ground_collision(gRenderer, frame, getPosx(), getPosy(), offset);
+    else
+    {
+        in_air();
+    }
+
+    // VELOCITY
+    // if(isOnGround() && *descending == true) {
+    // 						setVelocityY(0);
+    // 						*descending == false;
+    // }
+
+    // (*world).render_ground_collision(gRenderer, frame, getPosx(), getPosy(), offset);
 }
 
 void Player::render(SDL_Renderer *gRenderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, int offset)

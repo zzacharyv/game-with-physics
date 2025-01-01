@@ -1,5 +1,4 @@
-#include <cmath>
-#include <SDL2/SDL.h>
+#include "collision.h"
 
 bool box_collision(SDL_Rect rect1, SDL_Rect rect2)
 {
@@ -17,7 +16,7 @@ bool box_collision(SDL_Rect rect1, SDL_Rect rect2)
     }
 }
 
-bool circle_box_collision(float cx, float cy, float radius, SDL_Rect rect) {
+bool circle_box_collision(int cx, int cy, int radius, SDL_Rect rect) {
 
   // temporary variables to set edges for testing
   float testX = cx;
